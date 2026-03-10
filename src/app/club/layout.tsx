@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import Titlebar from "@/components/Titlebar";
 
 export const metadata: Metadata = {
   title: "Developer Club",
-  description: "Discover developers in the coding-dna community. Search by skills, technologies, and expertise.",
+  description: "Discover developers in the builderbio community. Search by skills, technologies, and expertise.",
 };
 
 export default function ClubLayout({
@@ -10,5 +11,10 @@ export default function ClubLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <Titlebar />
+      {children}
+    </>
+  );
 }

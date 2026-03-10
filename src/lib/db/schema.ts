@@ -18,6 +18,7 @@ export const users = pgTable(
     displayName: varchar("display_name", { length: 100 }),
     avatarColor: varchar("avatar_color", { length: 7 }).default("#00D084"),
     role: varchar("role", { length: 20 }).default("user").notNull(),
+    publishTokenHash: varchar("publish_token_hash", { length: 64 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [uniqueIndex("users_username_idx").on(t.username)]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
 
 interface ProfileCard {
@@ -14,61 +14,34 @@ interface ProfileCard {
 
 export default function ClubPage() {
   const { t } = useI18n();
-  const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProfileCard[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const search = useCallback(async (q: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/search/people", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
-      });
-      const data = await res.json();
-      setResults(data.results || []);
-    } catch {
-      setResults([]);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch("/api/search/people", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: "" }),
+        });
+        const data = await res.json();
+        setResults(data.results || []);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
     }
+    load();
   }, []);
-
-  useEffect(() => {
-    search("");
-  }, [search]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      search(query);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query, search]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="text-xl font-bold text-accent mb-6">
+      <h1 className="text-xl font-bold text-accent mb-8">
         <span className="text-text-muted">$</span> {t("club.title")}
       </h1>
 
-      {/* Search */}
-      <div className="terminal-block mb-8">
-        <div className="flex items-center gap-2">
-          <span className="text-accent">$</span>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("club.search")}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted"
-            autoFocus
-          />
-          <span className="cursor-blink text-accent">_</span>
-        </div>
-      </div>
-
-      {/* Results */}
       {loading ? (
         <p className="text-sm text-text-secondary text-center py-10">
           {t("common.loading")}

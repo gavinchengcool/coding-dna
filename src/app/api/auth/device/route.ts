@@ -40,7 +40,7 @@ export async function POST(_req: NextRequest) {
       expiresAt,
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://coding-dna.vercel.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://builderbio.dev";
 
     return NextResponse.json({
       device_code: deviceCode,

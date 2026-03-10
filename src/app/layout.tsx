@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
-import Link from "next/link";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -11,26 +10,26 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "coding-dna — Developer Skill Profile",
-    template: "%s | coding-dna",
+    default: "builderbio — Bio Link for Builders",
+    template: "%s | builderbio",
   },
   description:
-    "Analyze your AI coding conversations. Discover your developer DNA. Connect with the community.",
+    "How you build with AI is who you are. One command turns your daily coding sessions into a shareable profile. Drop it in your bio.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://coding-dna.vercel.app"
+    process.env.NEXT_PUBLIC_APP_URL || "https://builderbio.dev"
   ),
   openGraph: {
-    title: "coding-dna",
+    title: "builderbio — Bio Link for Builders",
     description:
-      "Analyze your AI coding conversations. Discover your developer DNA.",
+      "One command turns your daily coding sessions into a shareable profile. Drop it in your bio.",
     type: "website",
-    siteName: "coding-dna",
+    siteName: "builderbio",
   },
   twitter: {
     card: "summary_large_image",
-    title: "coding-dna",
+    title: "builderbio — Bio Link for Builders",
     description:
-      "Analyze your AI coding conversations. Discover your developer DNA.",
+      "One command turns your daily coding sessions into a shareable profile. Drop it in your bio.",
   },
 };
 
@@ -38,37 +37,40 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0D1117",
+  themeColor: "#111111",
 };
-
-function Titlebar() {
-  return (
-    <header className="sticky top-0 z-50 border-b border-border bg-bg-secondary/80 backdrop-blur-sm">
-      <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 text-accent font-bold text-sm tracking-wide">
-          <span className="text-text-muted">~/</span>coding-dna
-        </Link>
-        <nav className="flex items-center gap-4 text-xs text-text-secondary">
-          <Link href="/club" className="hover:text-accent transition-colors">
-            /club
-          </Link>
-          <Link href="/me" className="hover:text-accent transition-colors">
-            /me
-          </Link>
-        </nav>
-      </div>
-    </header>
-  );
-}
 
 function Footer() {
   return (
     <footer className="border-t border-border bg-bg-secondary/50 py-6 text-center text-xs text-text-muted">
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-6xl px-4 flex flex-col items-center gap-3">
         <p>
-          <span className="text-accent">$</span> coding-dna v0.1.0 — built for
-          developers who code with AI
+          <span className="text-accent">$</span> builderbio — the bio link for builders who ship with AI
         </p>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://x.com/gavin0922"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-text-secondary transition-colors"
+            title="X (Twitter)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          </a>
+          <a
+            href="https://www.linkedin.com/in/gavin-c-b271a492/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-text-secondary transition-colors"
+            title="LinkedIn"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+            </svg>
+          </a>
+        </div>
       </div>
     </footer>
   );
@@ -82,7 +84,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${jetbrainsMono.variable} antialiased min-h-screen flex flex-col`}>
-        <Titlebar />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>

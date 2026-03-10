@@ -56,7 +56,7 @@ export default function DashboardPage() {
         <div className="terminal-block inline-block text-left">
           <p className="text-xs text-text-muted mb-1"># Run in Claude Code:</p>
           <p className="text-sm">
-            <span className="text-accent">$</span> /coding-dna-summarize
+            <span className="text-accent">$</span> /builderbio-summarize
           </p>
         </div>
       </div>

@@ -1,86 +1,69 @@
 #!/usr/bin/env bash
-# coding-dna installer
-# Usage: curl -sfL https://coding-dna.vercel.app/install.sh | bash
+# builderbio installer v0.2.0
+# Usage: curl -sfL https://builderbio.dev/install.sh | bash
 set -euo pipefail
 
-VERSION="0.1.0"
-BASE_URL="${CODING_DNA_URL:-https://coding-dna.vercel.app}"
-INSTALL_DIR="${HOME}/.coding-dna"
-SKILLS_DIR="${INSTALL_DIR}/skills"
+VERSION="0.2.0"
+BASE_URL="${BUILDERBIO_URL:-https://builderbio.dev}"
+INSTALL_DIR="${HOME}/.builderbio"
+SKILL_DIR="${INSTALL_DIR}/skills/builderbio"
 
 echo ""
-echo "  coding-dna installer v${VERSION}"
+echo "  builderbio installer v${VERSION}"
 echo "  ─────────────────────────────"
 echo ""
 
-# Create directories
-mkdir -p "${INSTALL_DIR}"
-mkdir -p "${SKILLS_DIR}"
+# Create directory
+mkdir -p "${SKILL_DIR}"
 
-# Download skills
-echo "→ Downloading skills..."
+# Download the single skill file
+echo "→ Downloading skill..."
+curl -sfL "${BASE_URL}/skills/builderbio/SKILL.md" -o "${SKILL_DIR}/SKILL.md"
+echo "  ✓ Skill downloaded"
 
-SKILL_DIRS=(
-  "coding-dna-summarize"
-  "coding-dna-search-people"
-  "coding-dna-search-skills"
-  "coding-dna-logout"
+# Link to Claude Code
+if [ -d "${HOME}/.claude" ]; then
+  mkdir -p "${HOME}/.claude/skills"
+  ln -sf "${SKILL_DIR}" "${HOME}/.claude/skills/builderbio" 2>/dev/null || true
+  echo "  ✓ Linked to Claude Code (~/.claude/skills/builderbio/)"
+fi
+
+# Link to Cursor
+if [ -d "${HOME}/.cursor" ]; then
+  mkdir -p "${HOME}/.cursor/rules"
+  ln -sf "${SKILL_DIR}/SKILL.md" "${HOME}/.cursor/rules/builderbio.md" 2>/dev/null || true
+  echo "  ✓ Linked to Cursor (~/.cursor/rules/builderbio.md)"
+fi
+
+# Link to Codex
+if [ -d "${HOME}/.codex" ]; then
+  mkdir -p "${HOME}/.codex/skills/builderbio"
+  ln -sf "${SKILL_DIR}/SKILL.md" "${HOME}/.codex/skills/builderbio/SKILL.md" 2>/dev/null || true
+  echo "  ✓ Linked to Codex (~/.codex/skills/builderbio/)"
+fi
+
+# Clean up old skill folders from v0.1.x
+OLD_SKILLS=(
+  "builderbio-summarize"
+  "builderbio-search-people"
+  "builderbio-search-skills"
+  "builderbio-logout"
 )
 
-for SKILL in "${SKILL_DIRS[@]}"; do
-  mkdir -p "${SKILLS_DIR}/${SKILL}"
-
-  if [ "${SKILL}" = "coding-dna-summarize" ]; then
-    mkdir -p "${SKILLS_DIR}/${SKILL}/scripts"
-
-    for FILE in SKILL.md analysis-prompt.md device-auth.sh; do
-      curl -sfL "${BASE_URL}/skills/${SKILL}/${FILE}" -o "${SKILLS_DIR}/${SKILL}/${FILE}"
-    done
-
-    for SCRIPT in discover-sessions.sh compute-stats.py assemble-payload.py post-sync.sh; do
-      curl -sfL "${BASE_URL}/skills/${SKILL}/scripts/${SCRIPT}" -o "${SKILLS_DIR}/${SKILL}/scripts/${SCRIPT}"
-    done
-
-    chmod +x "${SKILLS_DIR}/${SKILL}/device-auth.sh"
-    chmod +x "${SKILLS_DIR}/${SKILL}/scripts/discover-sessions.sh"
-    chmod +x "${SKILLS_DIR}/${SKILL}/scripts/post-sync.sh"
-  else
-    curl -sfL "${BASE_URL}/skills/${SKILL}/SKILL.md" -o "${SKILLS_DIR}/${SKILL}/SKILL.md"
-  fi
+for OLD in "${OLD_SKILLS[@]}"; do
+  rm -rf "${INSTALL_DIR}/skills/${OLD}" 2>/dev/null || true
+  rm -f "${HOME}/.claude/skills/${OLD}" 2>/dev/null || true
+  rm -f "${HOME}/.cursor/rules/${OLD}.md" 2>/dev/null || true
 done
-
-# Download VERSION file
-curl -sfL "${BASE_URL}/skills/VERSION" -o "${SKILLS_DIR}/VERSION"
-
-echo "  ✓ Skills downloaded"
-
-# Create symlinks to Claude Code
-CLAUDE_SKILLS_DIR="${HOME}/.claude/skills"
-if [ -d "${HOME}/.claude" ]; then
-  mkdir -p "${CLAUDE_SKILLS_DIR}"
-  for SKILL in "${SKILL_DIRS[@]}"; do
-    ln -sf "${SKILLS_DIR}/${SKILL}" "${CLAUDE_SKILLS_DIR}/${SKILL}" 2>/dev/null || true
-  done
-  echo "  ✓ Linked to Claude Code (~/.claude/skills/)"
-fi
-
-# Create symlinks to Cursor
-CURSOR_RULES_DIR="${HOME}/.cursor/rules"
-if [ -d "${HOME}/.cursor" ]; then
-  mkdir -p "${CURSOR_RULES_DIR}"
-  for SKILL in "${SKILL_DIRS[@]}"; do
-    ln -sf "${SKILLS_DIR}/${SKILL}/SKILL.md" "${CURSOR_RULES_DIR}/${SKILL}.md" 2>/dev/null || true
-  done
-  echo "  ✓ Linked to Cursor (~/.cursor/rules/)"
-fi
+rm -f "${INSTALL_DIR}/skills/VERSION" 2>/dev/null || true
 
 echo ""
 echo "  ┌──────────────────────────────────────────────────┐"
-echo "  │  coding-dna installed successfully!              │"
+echo "  │  builderbio installed!                           │"
 echo "  │                                                  │"
-echo "  │  Next steps:                                     │"
-echo "  │  1. Open Claude Code or Cursor                   │"
-echo "  │  2. Run /coding-dna-summarize                    │"
-echo "  │  3. Follow the prompts to analyze your sessions  │"
+echo "  │  Next: open Claude Code, Cursor, or Codex and    │"
+echo "  │  run /builderbio to generate your profile.       │"
+echo "  │                                                  │"
+echo "  │  No login needed. No browser. Just run it.       │"
 echo "  └──────────────────────────────────────────────────┘"
 echo ""

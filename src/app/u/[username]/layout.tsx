@@ -9,9 +9,9 @@ export async function generateMetadata({
 
   return {
     title: `@${username}`,
-    description: `Developer profile for @${username} on coding-dna`,
+    description: `Developer profile for @${username} on builderbio`,
     openGraph: {
-      title: `@${username} — coding-dna`,
+      title: `@${username} — builderbio`,
       description: `Developer profile for @${username}`,
       type: "profile",
     },

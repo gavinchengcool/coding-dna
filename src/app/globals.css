@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #0D1117;
-  --bg-secondary: #161B22;
-  --bg-tertiary: #21262D;
-  --border: #30363D;
-  --text-primary: #E6EDF3;
-  --text-secondary: #8B949E;
-  --text-muted: #484F58;
-  --accent: #00D084;
-  --accent-dim: #00D08433;
-  --accent-hover: #00E892;
-  --danger: #F85149;
-  --warning: #D29922;
-  --info: #58A6FF;
+  --bg-primary: #111111;
+  --bg-secondary: #1A1A1A;
+  --bg-tertiary: #242424;
+  --border: #333333;
+  --text-primary: #EBEBEB;
+  --text-secondary: #999999;
+  --text-muted: #555555;
+  --accent: #FF6B35;
+  --accent-dim: #FF6B3533;
+  --accent-hover: #FF8A5C;
+  --danger: #FF4444;
+  --warning: #FFAB00;
+  --info: #42A5F5;
 }
 
 @theme inline {
@@ -101,6 +101,50 @@ body {
     padding: 0.75rem;
     font-size: 0.75rem;
   }
+}
+
+
+/* Fade in on scroll — applied via IntersectionObserver */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.fade-in-up.visible {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* Breathing glow for CTA */
+@keyframes breatheGlow {
+  0%, 100% { box-shadow: 0 0 20px var(--accent-dim), 0 0 40px transparent; }
+  50% { box-shadow: 0 0 30px var(--accent-dim), 0 0 60px var(--accent-dim); }
+}
+
+.glow-breathe {
+  animation: breatheGlow 3s ease-in-out infinite;
+}
+
+/* Hero multi-color glow background */
+.hero-glow {
+  position: relative;
+  overflow: hidden;
+}
+.hero-glow::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, 100vw);
+  height: min(600px, 100vw);
+  background: radial-gradient(circle, var(--accent-dim) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Line clamp utility */

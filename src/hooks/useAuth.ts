@@ -27,7 +27,7 @@ export function useAuth() {
 
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("coding-dna-token")
+      ? localStorage.getItem("builderbio-token")
       : null;
 
   const fetchProfile = useCallback(async () => {
@@ -43,7 +43,7 @@ export function useAuth() {
 
       if (!res.ok) {
         if (res.status === 401) {
-          localStorage.removeItem("coding-dna-token");
+          localStorage.removeItem("builderbio-token");
         }
         setError("Failed to load profile");
         return;
@@ -71,7 +71,7 @@ export function useAuth() {
         headers: { Authorization: `Bearer ${token}` },
       });
     } finally {
-      localStorage.removeItem("coding-dna-token");
+      localStorage.removeItem("builderbio-token");
       setProfile(null);
     }
   }, [token]);

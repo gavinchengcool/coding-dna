@@ -1,32 +1,32 @@
-# coding-dna
+# builderbio
 
-Analyze your AI coding conversations. Discover your developer DNA. Connect with the community.
+The bio link for builders who ship with AI. Linktree is for creators. This is for builders.
 
 ## What is this?
 
-coding-dna analyzes your conversations with AI coding tools (Claude Code, Cursor, Codex) and generates a developer skill profile — cognitive style radar, capability rings, activity heatmap, and behavioral fingerprint.
+builderbio analyzes your conversations with AI coding tools (Claude Code, Cursor, Codex) and generates a shareable builder profile — cognitive style radar, capability rings, activity heatmap, and behavioral fingerprint.
 
 All conversation data is analyzed **locally**. Only the generated summary/profile is uploaded.
 
 ## Quick Start
 
-### For developers (end users)
+### For builders (end users)
 
 ```bash
-curl -sfL https://coding-dna.vercel.app/install.sh | bash
+curl -sfL https://builderbio.dev/install.sh | bash
 ```
 
 Then in Claude Code or Cursor:
 
 ```
-/coding-dna-summarize
+/builderbio-summarize
 ```
 
 ### For contributors (self-hosting)
 
 ```bash
-git clone <repo-url> coding-dna
-cd coding-dna
+git clone <repo-url> builderbio
+cd builderbio
 npm install
 ```
 
@@ -54,7 +54,7 @@ device-auth.sh                      /api/auth/logout     → revoke token
 discover-sessions.sh                /api/profile/sync    → store profile
 compute-stats.py (local)            /api/profile/me      → get own profile
 analysis-prompt.md (AI)             /api/profile/:user   → public profile
-assemble-payload.py                 /api/search/people   → search developers
+assemble-payload.py                 /api/search/people   → search builders
 post-sync.sh                        /api/search/skills   → search by skill
                                     /api/connections     → social connections
                                     /api/admin/stats     → admin dashboard
@@ -66,8 +66,8 @@ post-sync.sh                        /api/search/skills   → search by skill
 |-------|-------------|
 | `/` | Landing page with install instructions |
 | `/me` | Authenticated dashboard with full profile |
-| `/u/[username]` | Public profile view |
-| `/club` | Developer directory with search |
+| `/u/[username]` | Public bio link profile |
+| `/club` | Builder directory with search |
 | `/auth/device` | Device code authentication |
 | `/admin` | Admin dashboard (admin role only) |
 
@@ -86,10 +86,10 @@ post-sync.sh                        /api/search/skills   → search by skill
 
 | Skill | Description |
 |-------|-------------|
-| `coding-dna-summarize` | 7-step analysis pipeline |
-| `coding-dna-search-people` | Search developers from CLI |
-| `coding-dna-search-skills` | Search by technology/skill |
-| `coding-dna-logout` | Revoke token and log out |
+| `builderbio-summarize` | 7-step analysis pipeline |
+| `builderbio-search-people` | Search builders from CLI |
+| `builderbio-search-skills` | Search by technology/skill |
+| `builderbio-logout` | Revoke token and log out |
 
 ## Database
 
