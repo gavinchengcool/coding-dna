@@ -25,20 +25,16 @@ export function proxy(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // Static HTML profiles take priority
-    const url = req.nextUrl.clone();
-    if (req.nextUrl.pathname === "/") {
-      url.pathname = `/${subdomain}.html`;
-      const staticRewrite = NextResponse.rewrite(url);
-      // Fall through to /u/[username] if static file doesn't exist
-      // For now, known static profiles are served directly
-      const staticProfiles = ["gavin"];
-      if (staticProfiles.includes(subdomain)) {
-        return staticRewrite;
-      }
+    // Static HTML profiles: rewrite to the static file on the main domain
+    const staticProfiles = ["gavin"];
+    if (req.nextUrl.pathname === "/" && staticProfiles.includes(subdomain)) {
+      return NextResponse.rewrite(
+        new URL(`https://${BASE_DOMAIN}/${subdomain}.html`)
+      );
     }
 
     // Rewrite subdomain to /u/[username]
+    const url = req.nextUrl.clone();
     url.pathname = `/u/${subdomain}${req.nextUrl.pathname === "/" ? "" : req.nextUrl.pathname}`;
     return NextResponse.rewrite(url);
   }
