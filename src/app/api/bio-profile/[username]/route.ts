@@ -95,6 +95,44 @@ export async function GET(
       `// footer rendered in HTML`
     );
 
+    // Inject SEO meta tags
+    const profileD = bioData.D as Record<string, Record<string, unknown>>;
+    const displayName = (profileD.profile?.display_name as string) || username;
+    const totalSessions = profileD.profile?.total_sessions || 0;
+    const totalTurns = profileD.profile?.total_turns || 0;
+    const activeDays = profileD.profile?.active_days || 0;
+    const agents = profileD.profile?.agents_used
+      ? Object.keys(profileD.profile.agents_used as Record<string, unknown>).join(" and ")
+      : "AI coding agents";
+    const pageTitle = `${displayName}'s BuilderBio — What I Built with AI`;
+    const pageDesc = `${totalSessions} sessions, ${totalTurns.toLocaleString()} turns, ${activeDays} active days of building with ${agents}. See what ${displayName} shipped with AI coding agents.`;
+    const profileUrl = `https://${username}.builderbio.dev`;
+
+    const seoMeta = `<title>${pageTitle}</title>
+<meta name="description" content="${pageDesc}">
+<link rel="canonical" href="${profileUrl}">
+<meta property="og:title" content="${pageTitle}">
+<meta property="og:description" content="${pageDesc}">
+<meta property="og:url" content="${profileUrl}">
+<meta property="og:site_name" content="builderbio">
+<meta property="og:type" content="profile">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${pageTitle}">
+<meta name="twitter:description" content="${pageDesc}">
+<meta name="twitter:site" content="@gavin0922">
+<script type="application/ld+json">
+${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      mainEntity: { "@type": "Person", name: displayName, url: profileUrl },
+      description: pageDesc,
+    })}
+</script>`;
+
+    // Replace the generic <title> with full SEO head
+    template = template.replace("<title>BuilderBio</title>", seoMeta);
+
     // Inject data
     template = template.replace(
       "__PROFILE_DATA_PLACEHOLDER__",

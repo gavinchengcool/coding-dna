@@ -10,27 +10,61 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "builderbio — Bio Link for Builders",
+    default: "builderbio — The Bio Link for Builders Who Ship with AI",
     template: "%s | builderbio",
   },
   description:
-    "How you build with AI is who you are. One command turns your daily coding sessions into a shareable profile. Drop it in your bio.",
+    "How you build with AI is who you are. One command scans your coding agent sessions and generates a shareable developer profile. Show what you shipped, your tech stack, building style, and activity — drop it in your bio.",
+  keywords: [
+    "developer profile",
+    "AI coding agent",
+    "Claude Code",
+    "Codex",
+    "Cursor",
+    "developer portfolio",
+    "bio link",
+    "builder profile",
+    "coding DNA",
+    "AI pair programming",
+    "developer showcase",
+    "tech stack",
+    "open source profile",
+  ],
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "https://builderbio.dev"
   ),
+  alternates: {
+    canonical: "https://builderbio.dev",
+  },
   openGraph: {
-    title: "builderbio — Bio Link for Builders",
+    title: "builderbio — The Bio Link for Builders Who Ship with AI",
     description:
-      "One command turns your daily coding sessions into a shareable profile. Drop it in your bio.",
+      "One command scans your coding agent sessions and generates a shareable developer profile. Show what you shipped, your tech stack, and building style.",
     type: "website",
     siteName: "builderbio",
+    url: "https://builderbio.dev",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "builderbio — Bio Link for Builders",
+    site: "@gavin0922",
+    creator: "@gavin0922",
+    title: "builderbio — The Bio Link for Builders Who Ship with AI",
     description:
-      "One command turns your daily coding sessions into a shareable profile. Drop it in your bio.",
+      "One command scans your coding agent sessions and generates a shareable developer profile. Show what you shipped, your tech stack, and building style.",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  category: "technology",
 };
 
 export const viewport: Viewport = {
@@ -81,8 +115,35 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "builderbio",
+    url: "https://builderbio.dev",
+    description:
+      "The bio link for builders who ship with AI. One command scans your coding agent sessions and generates a shareable developer profile.",
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "macOS, Linux",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    creator: {
+      "@type": "Person",
+      name: "Gavin",
+      url: "https://gavin.builderbio.dev",
+    },
+  };
+
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className={`${jetbrainsMono.variable} antialiased min-h-screen flex flex-col`}>
         <main className="flex-1">{children}</main>
         <Footer />
