@@ -25,9 +25,21 @@ export function proxy(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // Rewrite subdomain to /u/[username]
+    // Static HTML profiles take priority
     const url = req.nextUrl.clone();
-    url.pathname = `/u/${subdomain}${url.pathname === "/" ? "" : url.pathname}`;
+    if (req.nextUrl.pathname === "/") {
+      url.pathname = `/${subdomain}.html`;
+      const staticRewrite = NextResponse.rewrite(url);
+      // Fall through to /u/[username] if static file doesn't exist
+      // For now, known static profiles are served directly
+      const staticProfiles = ["gavin"];
+      if (staticProfiles.includes(subdomain)) {
+        return staticRewrite;
+      }
+    }
+
+    // Rewrite subdomain to /u/[username]
+    url.pathname = `/u/${subdomain}${req.nextUrl.pathname === "/" ? "" : req.nextUrl.pathname}`;
     return NextResponse.rewrite(url);
   }
 

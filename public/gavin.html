@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder Profile — AI 构建者画像</title>
+<style>
+:root {
+  --bg:#050507;--s1:#0c0c10;--s2:#131318;--s3:#1a1a21;
+  --bd:#1e1e28;--bd2:#2a2a38;
+  --t:#f0f0f5;--t2:#b8b8c8;--tm:#6b6b80;
+  --ac:#818cf8;--acd:#6366f1;--acb:rgba(99,102,241,.08);
+  --g:#34d399;--gd:rgba(52,211,153,.1);
+  --y:#fbbf24;--yd:rgba(251,191,36,.1);
+  --b:#60a5fa;--bd3:rgba(96,165,250,.1);
+  --p:#a78bfa;--pd:rgba(167,139,250,.1);
+  --o:#fb923c;--od:rgba(251,146,60,.1);
+  --pk:#f472b6;--r:#f87171;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.c{max-width:880px;margin:0 auto;padding:0 24px}
+section{padding:60px 0}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--bd),transparent)}
+.sh{margin-bottom:28px}.sh h2{font-size:22px;font-weight:700;letter-spacing:-.02em}.sh p{font-size:13px;color:var(--tm);margin-top:2px}
+
+/* HERO */
+.hero{padding:80px 0 60px;text-align:center;position:relative}
+.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.06)0%,rgba(52,211,153,.03)40%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:100px;font-size:12px;font-weight:600;color:var(--ac);background:var(--acb);border:1px solid rgba(99,102,241,.15);margin-bottom:24px;letter-spacing:.3px}
+.hero h1{font-size:48px;font-weight:800;letter-spacing:-.04em;background:linear-gradient(135deg,var(--t) 0%,var(--t2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.hero .sub{font-size:15px;color:var(--tm);margin-bottom:40px}
+.stats-row{display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
+.stat{text-align:center}.stat .num{font-size:42px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.stat .num.ac{color:var(--ac)}.stat .num.gc{color:var(--g)}.stat .num.yc{color:var(--y)}.stat .num.bc{color:var(--b)}
+.stat .lbl{font-size:11px;color:var(--tm);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;margin-top:6px}
+.agent-row{display:flex;justify-content:center;gap:10px;margin-top:28px;flex-wrap:wrap}
+.agent-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:100px;font-size:13px;font-weight:500;background:var(--s2);color:var(--t2);border:1px solid var(--bd)}
+.agent-dot{width:8px;height:8px;border-radius:50%}
+
+/* PROJECTS */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.pcard{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:20px;transition:all .25s}
+.pcard:hover{border-color:var(--bd2);transform:translateY(-2px)}
+.pcard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.pname{font-size:15px;font-weight:700;line-height:1.3}
+.pstatus{padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.ps-shipped{background:var(--gd);color:var(--g)}.ps-progress{background:var(--yd);color:var(--y)}.ps-explored{background:var(--bd3);color:var(--b)}
+.pdesc{font-size:12.5px;color:var(--t2);margin-bottom:12px;line-height:1.55}
+.ptags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.ptag{padding:3px 10px;border-radius:100px;font-size:10.5px;background:var(--s3);color:var(--tm);border:1px solid var(--bd);font-weight:500}
+.pmeta{font-size:11.5px;color:var(--tm);display:flex;gap:12px}.pmeta strong{color:var(--t2);font-weight:600}
+
+/* STYLE */
+.style-hero{text-align:center;margin-bottom:32px;padding:28px 0}
+.style-label{font-size:32px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,var(--ac),var(--p));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.style-sub{font-size:14px;color:var(--tm);margin-top:6px}
+.traits{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.trait{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:18px;text-align:center}
+.trait .tname{font-size:10.5px;color:var(--tm);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:8px}
+.trait .tval{font-size:20px;font-weight:800}.trait .tdesc{font-size:11px;color:var(--tm);margin-top:4px;line-height:1.4}
+.tbar-wrap{margin-top:28px}.tbar-label{font-size:10.5px;color:var(--tm);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:10px}
+.tbar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px}.tseg{height:100%;border-radius:3px;min-width:3px}
+.tleg{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}.tleg-i{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tm);font-weight:500}.tleg-d{width:7px;height:7px;border-radius:2px}
+
+/* TECH RADAR */
+.radar-wrap{display:flex;justify-content:center;padding:20px 0}
+.radar-bars{width:100%;max-width:600px}
+.radar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.radar-label{width:140px;font-size:12px;color:var(--t2);text-align:right;font-weight:500;flex-shrink:0}
+.radar-bar-bg{flex:1;height:20px;background:var(--s2);border-radius:10px;overflow:hidden}
+.radar-bar{height:100%;border-radius:10px;transition:width .6s ease}
+.radar-val{width:36px;font-size:11px;color:var(--tm);font-weight:600}
+
+/* EVOLUTION CHART */
+.evo-chart{position:relative;height:200px;display:flex;align-items:flex-end;gap:6px;padding:0 0 28px}
+.evo-bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.evo-bar{width:100%;border-radius:6px 6px 0 0;transition:height .4s ease;position:relative;min-height:4px}
+.evo-bar:hover{opacity:.85}
+.evo-val{font-size:10px;color:var(--tm);font-weight:600}
+.evo-label{font-size:10px;color:var(--tm);position:absolute;bottom:-24px;white-space:nowrap}
+.evo-legend{display:flex;gap:16px;margin-top:12px;font-size:11px;color:var(--tm)}
+.evo-legend span{display:flex;align-items:center;gap:5px}
+.evo-legend-dot{width:8px;height:8px;border-radius:2px}
+
+/* TIME DISTRIBUTION */
+.time-bars{display:flex;align-items:flex-end;gap:3px;height:120px;padding:0 0 24px;position:relative}
+.time-bar{flex:1;border-radius:4px 4px 0 0;min-height:2px;transition:height .3s;position:relative}
+.time-bar:hover .time-tip{opacity:1}
+.time-tip{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:10px;background:var(--s3);color:var(--t2);padding:2px 6px;border-radius:4px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.time-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--tm);margin-top:4px}
+.time-type{text-align:center;margin-top:20px}
+.time-type .big{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.time-type .small{font-size:13px;color:var(--tm);margin-top:4px}
+.period-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+.period-card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:14px;text-align:center}
+.period-card .p-name{font-size:11px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.period-card .p-val{font-size:20px;font-weight:800;margin:4px 0 2px}
+.period-card .p-sub{font-size:10.5px;color:var(--tm)}
+
+/* KEYWORDS */
+.kw-cloud{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:20px 0}
+.kw{padding:6px 16px;border-radius:100px;font-weight:600;border:1px solid var(--bd);transition:all .2s;cursor:default}
+.kw:hover{border-color:var(--bd2);transform:scale(1.05)}
+
+/* AGENT COMPARISON */
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cmp-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:24px}
+.cmp-name{font-size:18px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.cmp-name .dot{width:10px;height:10px;border-radius:50%}
+.cmp-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cmp-stat{text-align:center;padding:10px;background:var(--s2);border-radius:10px}
+.cmp-stat .cv{font-size:20px;font-weight:800}.cmp-stat .cl{font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.cmp-tools{margin-top:14px}.cmp-tools-label{font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px}
+.cmp-tool-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;color:var(--t2)}
+.cmp-tool-bar{flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}.cmp-tool-fill{height:100%;border-radius:3px}
+
+/* HEATMAP */
+.hm-scroll{overflow-x:auto;padding:4px 0}.hm-grid{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;gap:3px}
+.hm-cell{width:13px;height:13px;border-radius:3px;background:var(--s2);transition:background .15s}
+.hm-0{background:var(--s2)}.hm-1{background:rgba(52,211,153,.18)}.hm-2{background:rgba(52,211,153,.38)}.hm-3{background:rgba(52,211,153,.6)}.hm-4{background:rgba(52,211,153,.88)}
+.hm-meta{display:flex;gap:24px;margin-top:14px;font-size:12.5px;color:var(--tm)}.hm-meta strong{color:var(--t2)}
+.hm-legend{display:flex;align-items:center;gap:4px;margin-top:10px;font-size:11px;color:var(--tm)}.hm-legend-cell{width:13px;height:13px;border-radius:3px}
+
+/* HIGHLIGHTS */
+.hl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.hl{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:24px;position:relative;overflow:hidden}
+.hl::before{content:'';position:absolute;top:0;right:0;width:100px;height:100px;border-radius:50%;filter:blur(40px);opacity:.08;pointer-events:none}
+.hl:nth-child(1)::before{background:var(--ac)}.hl:nth-child(2)::before{background:var(--g)}.hl:nth-child(3)::before{background:var(--y)}.hl:nth-child(4)::before{background:var(--p)}
+.hl .hl-t{font-size:10.5px;color:var(--tm);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.hl .hl-v{font-size:28px;font-weight:800;margin:8px 0 4px;letter-spacing:-.02em}.hl .hl-d{font-size:12px;color:var(--tm);line-height:1.5}
+.fav-prompt{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:28px;margin-top:18px;border-left:3px solid var(--ac)}
+.fp-label{font-size:10.5px;color:var(--ac);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:12px}
+.fp-text{font-size:14px;line-height:1.8;color:var(--t2);font-family:"SF Mono","Fira Code","JetBrains Mono",monospace;white-space:pre-wrap;word-break:break-word}
+
+/* CTA */
+.cta{text-align:center;padding:48px 32px;background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(52,211,153,.04));border:1px solid var(--bd);border-radius:18px;margin-top:8px}
+.cta h3{font-size:24px;font-weight:800;margin-bottom:8px}.cta p{font-size:14px;color:var(--tm);margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.6}
+.cta code{display:inline-block;padding:10px 24px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;font-family:"SF Mono","Fira Code",monospace;font-size:13px;color:var(--ac);user-select:all;cursor:pointer}
+.cta .cta-sub{font-size:11px;color:var(--tm);margin-top:12px}
+
+.footer{text-align:center;padding:48px 0 40px;font-size:12px;color:var(--tm)}
+
+@media(max-width:640px){
+  .hero h1{font-size:36px}.stats-row{gap:24px}.stat .num{font-size:32px}
+  .pgrid{grid-template-columns:1fr}.traits{grid-template-columns:repeat(2,1fr)}
+  .hl-grid{grid-template-columns:1fr}.cmp-grid{grid-template-columns:1fr}
+  .period-grid{grid-template-columns:repeat(2,1fr)}.c{padding:0 16px}section{padding:40px 0}
+  .radar-label{width:100px;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="c">
+
+<section class="hero">
+  <div class="hero-badge">AI BUILDER PROFILE</div>
+  <h1>Builder Profile</h1>
+  <p class="sub" id="date-range"></p>
+  <div class="stats-row" id="stats-row"></div>
+  <div class="agent-row" id="agent-row"></div>
+</section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>我构建了什么</h2><p>用 AI 编程助手一起完成的项目</p></div><div class="pgrid" id="projects"></div></section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>技术栈指纹</h2><p>我最常接触的技术领域</p></div><div id="tech-radar"></div></section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>我的构建风格</h2><p>与 AI 编程助手的协作方式</p></div><div id="style-section"></div></section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>协作进化曲线</h2><p>每周的构建密度与深度变化</p></div><div id="evolution"></div></section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>我是几点钟的 Builder</h2><p>24 小时活跃分布</p></div><div id="time-dist"></div></section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>脑中关键词</h2><p>从所有 Prompt 中提取的高频词</p></div><div id="keywords"></div></section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>Agent 对比面板</h2><p>不同 AI Agent 的使用差异</p></div><div id="agent-cmp"></div></section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>活跃度</h2><p>每日构建热力图</p></div><div id="heatmap"></div></section>
+<div class="divider"></div>
+
+<section><div class="sh"><h2>高光时刻</h2><p>那些值得分享的瞬间</p></div><div id="highlights"></div></section>
+<div class="divider"></div>
+
+<section><div id="cta-section"></div></section>
+
+<div class="footer">由 <strong>Coding Agent Showcase</strong> 生成 · <span id="gen-time"></span></div>
+</div>
+
+<script>
+const D = {"profile": {"date_range": {"start": "2026-01-19", "end": "2026-03-10"}, "active_days": 34, "total_sessions": 230, "total_turns": 12711, "total_tool_calls": 8800, "total_tokens": 999313, "agents_used": {"claude-code": {"sessions": 51, "turns": 6413}, "codex": {"sessions": 179, "turns": 6298}}}, "projects": [{"name": "产品战略与迭代", "description": "核心 AI 产品的战略规划、产品迭代、竞品分析与团队协作", "sessions": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "tags": ["Product Strategy", "SaaS", "AI Agent"], "total_turns": 1635, "total_tool_calls": 1376, "date_range": {"start": "2026-01-19", "end": "2026-03-10"}, "status": "in progress"}, {"name": "Coding Agent Showcase", "description": "开发 Claude Code Skill —— 扫描本地对话记录生成可分享的 Builder Profile 页面", "sessions": ["", "", "", "", "", "", "", "", "", ""], "tags": ["Claude Code Skill", "Python", "HTML"], "total_turns": 2298, "total_tool_calls": 1085, "date_range": {"start": "2026-01-19", "end": "2026-03-10"}, "status": "in progress"}, {"name": "AI Agent 行业研究", "description": "深度研究 AI Agent 生态、行业趋势、竞品分析与技术架构", "sessions": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "tags": ["Research", "AI Agent", "Industry Analysis"], "total_turns": 1405, "total_tool_calls": 1264, "date_range": {"start": "2026-01-19", "end": "2026-03-09"}, "status": "shipped"}, {"name": "深度阅读与内容翻译", "description": "AI/Tech 行业文章阅读、翻译、总结与网页化，覆盖顶级 VC 与研究机构报告", "sessions": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "tags": ["Reading", "Translation", "Content"], "total_turns": 1161, "total_tool_calls": 1472, "date_range": {"start": "2026-01-20", "end": "2026-03-06"}, "status": "shipped"}, {"name": "开发环境与工具配置", "description": "MCP 集成、开发工具配置、VPN 网络、系统维护等基础设施", "sessions": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "tags": ["DevOps", "Tooling", "MCP"], "total_turns": 680, "total_tool_calls": 465, "date_range": {"start": "2026-01-19", "end": "2026-03-05"}, "status": "shipped"}, {"name": "社交媒体图片采集器", "description": "开发社交媒体图片自动下载工具，含网页端和定时抓取功能", "sessions": ["", "", "", ""], "tags": ["Python", "Web Scraping", "Automation"], "total_turns": 495, "total_tool_calls": 729, "date_range": {"start": "2026-01-26", "end": "2026-02-02"}, "status": "shipped"}, {"name": "CEO 智能助理套件", "description": "为创始人打造的 Agentic 工作流 —— 事项管理、动态追踪、内容生成", "sessions": [""], "tags": ["Productivity", "Agentic Workflow", "HTML/JS"], "total_turns": 55, "total_tool_calls": 18, "date_range": {"start": "2026-03-10", "end": "2026-03-10"}, "status": "in progress"}, {"name": "短视频下载工具", "description": "网页版短视频下载工具，输入链接即可解析下载", "sessions": [""], "tags": ["Web Tool", "Video"], "total_turns": 33, "total_tool_calls": 21, "date_range": {"start": "2026-01-27", "end": "2026-01-27"}, "status": "explored"}, {"name": "日常问答与杂项", "description": "账号验证、设备配置、翻译、社交媒体帖子撰写等日常任务", "sessions": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], "tags": ["Misc", "Q&A", "Daily"], "total_turns": 4937, "total_tool_calls": 2370, "date_range": {"start": "2026-01-20", "end": "2026-03-10"}, "status": "shipped"}], "heatmap": {"2026-01-09": 0, "2026-01-10": 0, "2026-01-11": 0, "2026-01-12": 0, "2026-01-13": 0, "2026-01-14": 0, "2026-01-15": 0, "2026-01-16": 0, "2026-01-17": 0, "2026-01-18": 0, "2026-01-19": 111, "2026-01-20": 144, "2026-01-21": 608, "2026-01-22": 177, "2026-01-23": 530, "2026-01-24": 14, "2026-01-25": 0, "2026-01-26": 779, "2026-01-27": 153, "2026-01-28": 248, "2026-01-29": 105, "2026-01-30": 276, "2026-01-31": 0, "2026-02-01": 117, "2026-02-02": 204, "2026-02-03": 0, "2026-02-04": 187, "2026-02-05": 40, "2026-02-06": 0, "2026-02-07": 105, "2026-02-08": 39, "2026-02-09": 50, "2026-02-10": 587, "2026-02-11": 49, "2026-02-12": 25, "2026-02-13": 401, "2026-02-14": 0, "2026-02-15": 93, "2026-02-16": 0, "2026-02-17": 0, "2026-02-18": 0, "2026-02-19": 0, "2026-02-20": 0, "2026-02-21": 0, "2026-02-22": 0, "2026-02-23": 0, "2026-02-24": 0, "2026-02-25": 64, "2026-02-26": 118, "2026-02-27": 547, "2026-02-28": 1416, "2026-03-01": 0, "2026-03-02": 503, "2026-03-03": 813, "2026-03-04": 671, "2026-03-05": 736, "2026-03-06": 1597, "2026-03-07": 0, "2026-03-08": 0, "2026-03-09": 53, "2026-03-10": 1151}, "style": {"avg_session_turns": 55, "session_length_distribution": {"short": 132, "medium": 73, "long": 25}, "exploration_ratio": 0.07, "build_ratio": 0.07, "command_ratio": 0.31, "avg_first_msg_length": 71, "avg_user_ratio": 0.27, "tool_totals": {"Bash": 6855, "Read": 485, "Edit": 429, "write_stdin": 196, "Write": 152, "TaskUpdate": 142, "Grep": 110, "TaskCreate": 71, "view_image": 61}}, "highlights": {"biggest_session": {"id": "", "turns": 1283, "tool_calls": 441, "display": "事项管理系统的完整重构 — 按日期展示、自动结转未完成任务"}, "busiest_day": {"date": "2026-03-06", "sessions": 13, "turns": 1597}, "longest_streak": 7, "current_streak": 2, "marathon_session": {"id": "", "duration_seconds": 1316463, "display": "与 AI 深度共创产品战略规划"}, "favorite_prompt": "回到事项列表里，昨日的任务出现了结转标签，这很好，但是事项的背景描述不见了 —— AI 问用户的问题、用户回复的答案、用户自行输入的补充信息、最终由 AI 进行总结的信息都需要展示。"}};
+const E = {"time": {"hour_distribution": {"0": 10, "1": 4, "2": 5, "3": 0, "4": 0, "5": 0, "6": 0, "7": 4, "8": 0, "9": 16, "10": 40, "11": 13, "12": 2, "13": 10, "14": 7, "15": 12, "16": 12, "17": 26, "18": 28, "19": 9, "20": 4, "21": 14, "22": 0, "23": 14}, "period_data": {"deep_night": {"sessions": 19, "turns": 286}, "morning": {"sessions": 73, "turns": 2832}, "afternoon": {"sessions": 69, "turns": 6271}, "evening": {"sessions": 69, "turns": 3322}}, "builder_type": "上午型 Builder", "peak_hour": 10}, "tech": {"Shell / CLI": 100, "HTML / CSS": 31, "Product Strategy": 27, "Content Processing": 19, "Claude Code Skills": 15, "AI Agent Ecosystem": 15, "Media Automation": 12, "Code Reading": 9, "Code Generation": 8, "MCP Integrations": 2}, "keywords": [["Agent", 30], ["Claude Code", 19], ["Coding", 17], ["OpenClaw", 15], ["Skills", 11], ["MCP", 16], ["Codex", 9], ["AI Native", 8], ["Manus", 5], ["产品", 12], ["战略", 8], ["工具", 7], ["sandbox", 6], ["PDF", 6], ["podcast", 4], ["Anthropic", 5], ["OpenAI", 4]], "evolution": [{"week": "2026-01-19", "sessions": 50, "turns": 1584, "avg_turns": 32}, {"week": "2026-01-26", "sessions": 57, "turns": 1678, "avg_turns": 29}, {"week": "2026-02-02", "sessions": 28, "turns": 575, "avg_turns": 21}, {"week": "2026-02-09", "sessions": 36, "turns": 1205, "avg_turns": 33}, {"week": "2026-02-23", "sessions": 14, "turns": 2145, "avg_turns": 153}, {"week": "2026-03-02", "sessions": 37, "turns": 4320, "avg_turns": 117}, {"week": "2026-03-09", "sessions": 8, "turns": 1204, "avg_turns": 150}], "comparison": {"claude-code": {"sessions": 51, "total_turns": 6413, "total_tool_calls": 2270, "avg_turns": 126, "top_tools": [["Bash", 656], ["Read", 485], ["Edit", 429], ["Write", 152], ["TaskUpdate", 142]], "distribution": {"short": 24, "medium": 16, "long": 11}}, "codex": {"sessions": 179, "total_turns": 6298, "total_tool_calls": 6530, "avg_turns": 35, "top_tools": [["Bash", 2091], ["shell_command", 4108], ["write_stdin", 196], ["view_image", 61], ["update_plan", 36]], "distribution": {"short": 108, "medium": 57, "long": 14}}}};
+const TC={"Bash":"#fb923c","Read":"#60a5fa","Write":"#34d399","Edit":"#a78bfa","Grep":"#fbbf24","Glob":"#22d3ee","Task":"#f472b6","TaskUpdate":"#818cf8","TaskCreate":"#818cf8","write_stdin":"#c084fc","WebFetch":"#2dd4bf","WebSearch":"#2dd4bf","AskUserQuestion":"#f43f5e","view_image":"#f472b6","shell_command":"#fb923c","update_plan":"#818cf8","EnterPlanMode":"#a78bfa"};
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function fN(n){if(!n)return'0';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toString()}
+
+// === HERO ===
+(function(){
+  const p=D.profile;
+  document.getElementById('date-range').textContent=p.date_range.start+' → '+p.date_range.end+' · '+p.active_days+' 天活跃';
+  document.getElementById('stats-row').innerHTML=[
+    {v:p.total_sessions,l:'会话',c:'ac'},{v:p.total_turns,l:'轮对话',c:'gc'},
+    {v:p.total_tool_calls,l:'工具调用',c:'yc'},{v:p.total_tokens,l:'Tokens',c:'bc'}
+  ].map(s=>`<div class="stat"><div class="num ${s.c}">${fN(s.v)}</div><div class="lbl">${s.l}</div></div>`).join('');
+  const colors={'claude-code':'var(--ac)','codex':'var(--g)'};
+  document.getElementById('agent-row').innerHTML=Object.entries(p.agents_used).map(([n,d])=>
+    `<span class="agent-chip"><span class="agent-dot" style="background:${colors[n]||'var(--o)'}"></span>${esc(n)} · ${d.sessions} 次会话</span>`
+  ).join('');
+})();
+
+// === PROJECTS ===
+(function(){
+  const sl={'shipped':'ps-shipped','in progress':'ps-progress','explored':'ps-explored'};
+  const sn={'shipped':'已完成','in progress':'进行中','explored':'已探索'};
+  document.getElementById('projects').innerHTML=(D.projects||[]).map(p=>{
+    const tags=(p.tags||[]).map(t=>`<span class="ptag">${esc(t)}</span>`).join('');
+    return`<div class="pcard"><div class="pcard-top"><div class="pname">${esc(p.name)}</div><span class="pstatus ${sl[p.status]||'ps-explored'}">${sn[p.status]||p.status}</span></div><div class="pdesc">${esc(p.description)}</div><div class="ptags">${tags}</div><div class="pmeta"><span><strong>${p.sessions?.length||0}</strong> 次会话</span><span><strong>${fN(p.total_turns)}</strong> 轮对话</span><span><strong>${fN(p.total_tool_calls)}</strong> 次工具</span></div></div>`;
+  }).join('');
+})();
+
+// === TECH RADAR ===
+(function(){
+  const tech=E.tech;
+  const colors=['var(--ac)','var(--g)','var(--y)','var(--b)','var(--p)','var(--o)','var(--pk)','var(--r)','#22d3ee','#2dd4bf'];
+  let h='<div class="radar-bars">';
+  Object.entries(tech).forEach(([name,val],i)=>{
+    h+=`<div class="radar-row"><div class="radar-label">${esc(name)}</div><div class="radar-bar-bg"><div class="radar-bar" style="width:${val}%;background:${colors[i%colors.length]}"></div></div><div class="radar-val">${val}%</div></div>`;
+  });
+  h+='</div>';
+  document.getElementById('tech-radar').innerHTML='<div class="radar-wrap">'+h+'</div>';
+})();
+
+// === STYLE ===
+(function(){
+  const st=D.style;const tt=st.tool_totals||{};const total=Object.values(tt).reduce((a,b)=>a+b,0)||1;
+  const sorted=Object.entries(tt).sort((a,b)=>b[1]-a[1]);
+  const bar=sorted.map(([t,c])=>{const pct=((c/total)*100).toFixed(1);return`<div class="tseg" style="width:${pct}%;background:${TC[t]||'#52525b'}" title="${t}: ${c}"></div>`;}).join('');
+  const leg=sorted.filter(([,c])=>c/total>.02).map(([t,c])=>`<span class="tleg-i"><span class="tleg-d" style="background:${TC[t]||'#52525b'}"></span>${t} ${c}</span>`).join('');
+  const sd=st.session_length_distribution||{};
+  document.getElementById('style-section').innerHTML=`
+    <div class="style-hero"><div class="style-label">Delegator × Sprinter</div><div class="style-sub">以简短指令驱动 AI，高频短对话，重度命令行用户</div></div>
+    <div class="traits">
+      <div class="trait"><div class="tname">Prompt 风格</div><div class="tval">Delegator</div><div class="tdesc">简短指令，信任 AI 自主执行</div></div>
+      <div class="trait"><div class="tname">会话节奏</div><div class="tval">Sprinter</div><div class="tdesc">${sd.short||0} 短 · ${sd.medium||0} 中 · ${sd.long||0} 长</div></div>
+      <div class="trait"><div class="tname">工具偏好</div><div class="tval">Commander</div><div class="tdesc">${Math.round((st.command_ratio||0)*100)}% 命令行调用</div></div>
+      <div class="trait"><div class="tname">Agent 忠诚度</div><div class="tval">Polygamous</div><div class="tdesc">Claude Code + Codex 双修</div></div>
+    </div>
+    <div class="tbar-wrap"><div class="tbar-label">工具分布</div><div class="tbar">${bar}</div><div class="tleg">${leg}</div></div>`;
+})();
+
+// === EVOLUTION CHART ===
+(function(){
+  const evo=E.evolution;
+  const maxTurns=Math.max(...evo.map(e=>e.turns));
+  const maxSessions=Math.max(...evo.map(e=>e.sessions));
+  let h='<div style="position:relative"><div class="evo-chart">';
+  evo.forEach((e,i)=>{
+    const tH=Math.max(4,Math.round(e.turns/maxTurns*160));
+    const label=e.week.substring(5);
+    h+=`<div class="evo-bar-group">
+      <div class="evo-val">${fN(e.turns)}</div>
+      <div class="evo-bar" style="height:${tH}px;background:linear-gradient(180deg,var(--ac),var(--acd))" title="第${i+1}周: ${e.sessions}次会话, ${e.turns}轮对话, 平均${e.avg_turns}轮"></div>
+      <div class="evo-label">${label}</div>
+    </div>`;
+  });
+  h+='</div>';
+  h+='<div class="evo-legend"><span><span class="evo-legend-dot" style="background:var(--ac)"></span>每周对话轮次</span></div>';
+  h+='<div style="margin-top:16px;padding:16px;background:var(--s1);border:1px solid var(--bd);border-radius:12px;font-size:13px;color:var(--t2);line-height:1.6">';
+  h+='<strong style="color:var(--t)">趋势洞察：</strong>前 4 周以高频短对话为主（平均 29 轮/次），第 5 周开始转向深度长对话（平均 150 轮/次）—— 从探索期进入了深度构建期。';
+  h+='</div></div>';
+  document.getElementById('evolution').innerHTML=h;
+})();
+
+// === TIME DISTRIBUTION ===
+(function(){
+  const hd=E.time.hour_distribution;
+  const maxH=Math.max(...Object.values(hd));
+  const pd=E.time.period_data;
+  const periodNames={'deep_night':'深夜','morning':'上午','afternoon':'下午','evening':'晚上'};
+  const periodIcons={'deep_night':'🌙','morning':'☀️','afternoon':'⚡','evening':'🦉'};
+  const periodColors={'deep_night':'var(--p)','morning':'var(--y)','afternoon':'var(--o)','evening':'var(--ac)'};
+
+  let bars='';
+  for(let h=0;h<24;h++){
+    const v=hd[String(h)]||0;
+    const ht=maxH>0?Math.max(2,Math.round(v/maxH*100)):2;
+    const col=h<6?'var(--p)':h<12?'var(--y)':h<18?'var(--o)':'var(--ac)';
+    bars+=`<div class="time-bar" style="height:${ht}%;background:${col}" title="${h}:00 — ${v} 次会话"><div class="time-tip">${h}:00 · ${v}次</div></div>`;
+  }
+
+  let periods='';
+  Object.entries(pd).forEach(([k,v])=>{
+    periods+=`<div class="period-card"><div class="p-name">${periodIcons[k]} ${periodNames[k]}</div><div class="p-val">${v.sessions}</div><div class="p-sub">${fN(v.turns)} 轮对话</div></div>`;
+  });
+
+  document.getElementById('time-dist').innerHTML=`
+    <div class="time-bars">${bars}</div>
+    <div class="time-labels"><span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div>
+    <div class="time-type"><div class="big">上午 10 点是我的巅峰时刻</div><div class="small">会话最密集的时段：上午 9-11 点，共 69 次会话</div></div>
+    <div class="period-grid">${periods}</div>`;
+})();
+
+// === KEYWORDS ===
+(function(){
+  const kw=E.keywords;
+  const maxC=Math.max(...kw.map(k=>k[1]));
+  const sizes=[14,16,18,22,26,32];
+  const colors=['var(--tm)','var(--t2)','var(--b)','var(--g)','var(--ac)','var(--y)'];
+  document.getElementById('keywords').innerHTML='<div class="kw-cloud">'+kw.map(([w,c])=>{
+    const lvl=Math.min(5,Math.floor(c/maxC*5));
+    return`<span class="kw" style="font-size:${sizes[lvl]}px;color:${colors[lvl]};background:${lvl>3?'var(--s2)':'var(--s1)'}">${esc(w)}</span>`;
+  }).join('')+'</div>';
+})();
+
+// === AGENT COMPARISON ===
+(function(){
+  const cmp=E.comparison;
+  const agentLabels={'claude-code':'Claude Code','codex':'Codex'};
+  const agentColors={'claude-code':'var(--ac)','codex':'var(--g)'};
+  let h='<div class="cmp-grid">';
+  Object.entries(cmp).forEach(([agent,data])=>{
+    const maxTool=Math.max(...data.top_tools.map(t=>t[1]));
+    const toolBars=data.top_tools.slice(0,4).map(([t,c])=>{
+      const pct=Math.round(c/maxTool*100);
+      const col=TC[t]||'#52525b';
+      return`<div class="cmp-tool-row"><span style="width:80px;flex-shrink:0">${t}</span><div class="cmp-tool-bar"><div class="cmp-tool-fill" style="width:${pct}%;background:${col}"></div></div><span style="width:36px;text-align:right">${c}</span></div>`;
+    }).join('');
+    const dist=data.distribution;
+    h+=`<div class="cmp-card">
+      <div class="cmp-name"><span class="dot" style="background:${agentColors[agent]}"></span>${agentLabels[agent]||agent}</div>
+      <div class="cmp-stats">
+        <div class="cmp-stat"><div class="cv">${data.sessions}</div><div class="cl">会话</div></div>
+        <div class="cmp-stat"><div class="cv">${fN(data.total_turns)}</div><div class="cl">对话轮次</div></div>
+        <div class="cmp-stat"><div class="cv">${data.avg_turns}</div><div class="cl">平均轮次</div></div>
+        <div class="cmp-stat"><div class="cv">${fN(data.total_tool_calls)}</div><div class="cl">工具调用</div></div>
+      </div>
+      <div class="cmp-tools"><div class="cmp-tools-label">TOP 工具</div>${toolBars}</div>
+      <div style="margin-top:12px;font-size:12px;color:var(--tm)">${dist.short} 短 · ${dist.medium} 中 · ${dist.long} 长会话</div>
+    </div>`;
+  });
+  h+='</div>';
+  h+='<div style="margin-top:16px;padding:16px;background:var(--s1);border:1px solid var(--bd);border-radius:12px;font-size:13px;color:var(--t2);line-height:1.6">';
+  h+='<strong style="color:var(--t)">使用差异：</strong>Claude Code 用于深度构建（平均 126 轮/次），侧重代码读写；Codex 用于快速问答和信息获取（平均 35 轮/次），以命令行执行为主。';
+  h+='</div>';
+  document.getElementById('agent-cmp').innerHTML=h;
+})();
+
+// === HEATMAP ===
+(function(){
+  const hm=D.heatmap||{};const dates=Object.keys(hm).sort();if(!dates.length)return;
+  const firstDate=new Date(dates[0]+'T00:00:00');const dow=firstDate.getDay()||7;const padBefore=dow-1;
+  let cells='';for(let i=0;i<padBefore;i++)cells+='<div class="hm-cell hm-0"></div>';
+  dates.forEach(d=>{const v=hm[d]||0;const lvl=v===0?0:v<20?1:v<100?2:v<300?3:4;cells+=`<div class="hm-cell hm-${lvl}" title="${d}: ${v} 轮对话"></div>`;});
+  const hl=D.highlights;
+  document.getElementById('heatmap').innerHTML=`
+    <div class="hm-scroll"><div class="hm-grid">${cells}</div></div>
+    <div class="hm-meta"><span>最长连续: <strong>${hl.longest_streak} 天</strong></span><span>当前连续: <strong>${hl.current_streak} 天</strong></span><span>活跃: <strong>${D.profile.active_days}/${dates.length} 天</strong></span></div>
+    <div class="hm-legend"><span>少</span><div class="hm-legend-cell hm-0"></div><div class="hm-legend-cell hm-1"></div><div class="hm-legend-cell hm-2"></div><div class="hm-legend-cell hm-3"></div><div class="hm-legend-cell hm-4"></div><span>多</span></div>`;
+})();
+
+// === HIGHLIGHTS ===
+(function(){
+  const hl=D.highlights;const bs=hl.biggest_session;const bd=hl.busiest_day;
+  const totalTurns=D.profile.total_turns;const pages=Math.round(totalTurns/3);
+  document.getElementById('highlights').innerHTML=`
+    <div class="hl-grid">
+      <div class="hl"><div class="hl-t">最大会话</div><div class="hl-v">${fN(bs.turns)} 轮</div><div class="hl-d">${esc(bs.display)}</div></div>
+      <div class="hl"><div class="hl-t">最忙的一天</div><div class="hl-v">${bd.date}</div><div class="hl-d">${bd.sessions} 次会话 · ${fN(bd.turns)} 轮对话</div></div>
+      <div class="hl"><div class="hl-t">最长连续</div><div class="hl-v">${hl.longest_streak} 天</div><div class="hl-d">连续每天都在与 AI 一起构建</div></div>
+      <div class="hl"><div class="hl-t">一个数字</div><div class="hl-v">${fN(totalTurns)} 轮</div><div class="hl-d">≈ 一本 ${fN(pages)} 页的对话录</div></div>
+    </div>
+    <div class="fav-prompt"><div class="fp-label">最有代表性的 Prompt</div><div class="fp-text">${esc(hl.favorite_prompt)}</div></div>`;
+})();
+
+// === CTA ===
+document.getElementById('cta-section').innerHTML=`<div class="cta">
+  <h3>生成你自己的 Builder Profile</h3>
+  <p>扫描你本地的 Claude Code 和 Codex 会话记录，一键生成属于你的 AI 构建者画像。</p>
+  <code>claude install-skill https://github.com/anthropics/skills/coding-agent-showcase</code>
+  <div class="cta-sub">安装后在 Claude Code 中说「帮我生成 Builder Profile」即可</div>
+</div>`;
+
+document.getElementById('gen-time').textContent=new Date().toLocaleString('zh-CN');
+</script>
+</body>
+</html>
