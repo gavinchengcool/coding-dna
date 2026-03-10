@@ -45,7 +45,7 @@ function Footer() {
     <footer className="border-t border-border bg-bg-secondary/50 py-6 text-center text-xs text-text-muted">
       <div className="mx-auto max-w-6xl px-4 flex flex-col items-center gap-3">
         <p>
-          <span className="text-accent">$</span> builderbio — the bio link for builders who ship with AI
+          <span className="text-accent">$</span> The bio link for builders who ship with AI
         </p>
         <div className="flex items-center gap-4">
           <a

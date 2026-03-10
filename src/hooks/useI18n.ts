@@ -8,7 +8,7 @@ const translations: Record<string, string> = {
   "hero.subtitle":
     "How you build with AI is who you are. One command turns your daily coding sessions into a shareable profile. Drop it in your bio.",
   "hero.tagline": "",
-  "hero.install": "PASTE AND SEND THIS TO YOUR CODING AGENT",
+  "hero.install": "SEND THIS TO YOUR CODING AGENT → GET YOUR BIO LINK",
   "hero.howItWorks": "How it works",
 
   // Steps
