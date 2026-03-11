@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 export default function Titlebar() {
   const pathname = usePathname();
   const isTasteBoard = pathname.startsWith("/taste-board");
+  const isHome = pathname === "/";
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-bg-secondary/80 backdrop-blur-sm">
@@ -12,9 +13,9 @@ export default function Titlebar() {
       <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4">
         <a
           href="https://builderbio.dev"
-          className="flex items-center gap-2 text-text-secondary font-bold text-sm tracking-wide hover:text-accent transition-colors"
+          className={`flex items-center font-bold text-sm tracking-wide transition-colors ${isHome ? "text-accent" : "text-text-secondary hover:text-accent"}`}
         >
-          <span className="text-text-muted">~/</span>builderbio
+          ~/builderbio
         </a>
         <nav className="flex items-center gap-4 text-xs text-text-secondary">
           <a
