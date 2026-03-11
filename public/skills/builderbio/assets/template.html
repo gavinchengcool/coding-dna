@@ -24,18 +24,18 @@
 html{overflow-x:hidden}
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;max-width:100vw}
 
-/* NAV BAR */
-.site-nav{position:sticky;top:0;z-index:50;background:rgba(5,5,7,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.site-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--bd2),transparent)}
+/* NAV BAR — hardcoded colors to match site-wide Titlebar exactly */
+.site-nav{position:sticky;top:0;z-index:50;background:rgba(26,26,26,.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.site-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#333,transparent)}
 .site-nav-inner{max-width:72rem;margin:0 auto;display:flex;height:3rem;align-items:center;justify-content:space-between;padding:0 1rem}
-.site-nav-logo{display:flex;align-items:center;gap:.5rem;color:var(--tm);font-weight:700;font-size:.875rem;line-height:1.25rem;letter-spacing:.025em;text-decoration:none;transition:color .2s;font-family:'JetBrains Mono','Fira Code','SF Mono',ui-monospace,monospace}
-.site-nav-logo:hover{color:var(--ac)}
-.site-nav-logo .tilde{color:var(--bd2)}
-.site-nav-links{display:flex;align-items:center;gap:1rem;font-size:.75rem;line-height:1rem;color:var(--tm);font-family:'JetBrains Mono','Fira Code','SF Mono',ui-monospace,monospace}
+.site-nav-logo{display:flex;align-items:center;gap:.5rem;color:#999;font-weight:700;font-size:.875rem;line-height:1.25rem;letter-spacing:.025em;text-decoration:none;transition:color .2s;font-family:'JetBrains Mono','Fira Code','SF Mono',ui-monospace,monospace}
+.site-nav-logo:hover{color:#FF6B35}
+.site-nav-logo .tilde{color:#555}
+.site-nav-links{display:flex;align-items:center;gap:1rem;font-size:.75rem;line-height:1rem;color:#999;font-family:'JetBrains Mono','Fira Code','SF Mono',ui-monospace,monospace}
 .site-nav-links a{color:inherit;text-decoration:none;transition:color .2s}
-.site-nav-links a:hover{color:var(--ac)}
-.site-nav-links .sep{color:var(--bd2)}
-.site-nav-links .active{color:var(--ac)}
+.site-nav-links a:hover{color:#FF6B35}
+.site-nav-links .sep{color:#555}
+.site-nav-links .active{color:#FF6B35}
 
 /* SHARE BAR */
 .share-bar{position:fixed;bottom:24px;right:24px;z-index:40;display:flex;gap:8px;align-items:center}
@@ -181,88 +181,123 @@ section{padding:60px 0}
 .agent-since{font-size:10px;color:var(--tm);margin-top:2px;display:block;letter-spacing:.3px}
 
 @media(max-width:640px){
-  /* Each section as a "screen" — generous vertical spacing */
-  section{padding:48px 0;min-height:auto}
-  .c{padding:0 20px}
-  /* Hero */
-  .hero{padding:60px 0 48px}
-  .hero h1{font-size:28px;letter-spacing:-.03em}
-  .hero .sub{font-size:13px;margin-bottom:28px}
-  .stats-row{gap:20px}
-  .stat .num{font-size:28px}
-  .stat .lbl{font-size:10px;letter-spacing:.8px}
-  .agent-row{gap:6px;margin-top:20px}
-  .agent-chip{font-size:11px;padding:5px 12px}
-  /* Projects */
-  .pgrid{grid-template-columns:1fr;gap:12px}
-  .pcard{padding:16px}
-  .pname{font-size:14px}
-  .pdesc{font-size:12px}
-  /* Style */
-  .traits{grid-template-columns:1fr 1fr;gap:8px}
-  .trait{padding:14px}
+  /* === MODULE-PER-SCREEN MOBILE LAYOUT ===
+     Each section fills ~one screen with generous spacing.
+     Optimized for easy screenshots and reduced info density. */
+  section{padding:64px 0;min-height:80vh;display:flex;flex-direction:column;justify-content:center}
+  .c{padding:0 24px}
+  .divider{margin:16px 0}
+
+  /* Hero — full screen intro */
+  .hero{padding:48px 0 40px;min-height:90vh}
+  .hero h1{font-size:32px;letter-spacing:-.03em}
+  .hero .sub{font-size:14px;margin-bottom:32px;line-height:1.6}
+  .stats-row{gap:28px}
+  .stat .num{font-size:32px}
+  .stat .lbl{font-size:10px;letter-spacing:.8px;margin-top:8px}
+  .agent-row{gap:8px;margin-top:24px}
+  .agent-chip{font-size:12px;padding:6px 14px}
+  .agent-since{font-size:10px}
+
+  /* Projects — one card at a time, stack vertically */
+  .pgrid{grid-template-columns:1fr;gap:16px}
+  .pcard{padding:20px}
+  .pname{font-size:15px}
+  .pdesc{font-size:13px;line-height:1.6}
+  .ptags{gap:6px}
+  .pmeta{font-size:12px}
+
+  /* Style — module feel */
+  .style-hero{padding:20px 0;margin-bottom:24px}
+  .style-label{font-size:26px}
+  .style-sub{font-size:13px;line-height:1.5}
+  .traits{grid-template-columns:1fr 1fr;gap:12px}
+  .trait{padding:16px}
   .trait .tval{font-size:18px}
-  .style-label{font-size:24px}
-  .style-sub{font-size:12px}
-  .tleg{gap:8px}
+  .trait .tname{font-size:10px}
+  .trait .tdesc{font-size:11px;line-height:1.5}
+  .tleg{gap:10px;margin-top:12px}
   .tleg-i{font-size:10px}
+  .tbar-wrap{margin-top:24px}
+
   /* Tech Radar */
   .radar-label{width:80px;font-size:10px}
-  .radar-bar-bg{height:16px}
-  .radar-val{font-size:10px;width:30px}
-  .radar-row{gap:8px;margin-bottom:8px}
+  .radar-bar-bg{height:18px}
+  .radar-val{font-size:10px;width:32px}
+  .radar-row{gap:10px;margin-bottom:10px}
+
   /* Evolution */
-  .evo-chart{height:140px;gap:3px}
+  .evo-chart{height:160px;gap:3px}
   .evo-val{font-size:9px}
   .evo-label{font-size:9px}
-  /* Time */
-  .time-bars{height:80px;gap:2px}
-  .time-type .big{font-size:22px}
-  .time-type .small{font-size:12px}
-  .period-grid{grid-template-columns:1fr 1fr;gap:8px}
-  .period-card{padding:10px}
-  .period-card .p-val{font-size:16px}
-  .period-card .p-name{font-size:10px}
+  .evo-insight{font-size:13px;line-height:1.5;margin-top:16px}
+
+  /* Time — dedicated screen */
+  .time-bars{height:100px;gap:2px}
+  .time-type{margin-bottom:20px}
+  .time-type .big{font-size:24px}
+  .time-type .small{font-size:13px}
+  .period-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .period-card{padding:14px}
+  .period-card .p-val{font-size:18px}
+  .period-card .p-name{font-size:10px;margin-top:4px}
+
   /* Keywords */
-  .kw-cloud{gap:6px;padding:12px 0}
-  .kw{padding:4px 12px}
+  .kw-cloud{gap:8px;padding:16px 0}
+  .kw{padding:6px 14px;font-size:13px}
+
   /* Agent Comparison */
-  .cmp-grid{grid-template-columns:1fr;gap:12px}
-  .cmp-card{padding:18px}
-  .cmp-name{font-size:16px}
-  .cmp-stat .cv{font-size:18px}
+  .cmp-grid{grid-template-columns:1fr;gap:16px}
+  .cmp-card{padding:20px}
+  .cmp-name{font-size:17px}
+  .cmp-stat .cv{font-size:20px}
+  .cmp-stat .cl{font-size:10px}
+  .cmp-insight{font-size:13px;line-height:1.5}
+
   /* Heatmap */
   .hm-cell{width:10px;height:10px}
   .hm-grid{gap:2px}
-  .hm-meta{flex-direction:column;gap:6px;font-size:11px}
-  /* Highlights */
-  .hl-grid{grid-template-columns:1fr;gap:10px}
-  .hl{padding:18px}
-  .hl .hl-v{font-size:24px}
-  .fav-prompt{padding:20px}
-  .fp-text{font-size:12px}
-  /* CTA */
-  .cta{padding:32px 20px}
-  .cta h3{font-size:20px}
-  .cta p{font-size:12px}
+  .hm-meta{flex-direction:column;gap:8px;font-size:12px}
+
+  /* Highlights — one highlight card per row */
+  .hl-grid{grid-template-columns:1fr;gap:14px}
+  .hl{padding:20px}
+  .hl .hl-v{font-size:26px}
+  .hl .hl-l{font-size:11px;margin-top:6px}
+  .fav-prompt{padding:24px;margin-top:16px}
+  .fp-text{font-size:13px;line-height:1.6}
+
+  /* CTA — clear standalone screen */
+  .cta{padding:40px 24px;min-height:auto}
+  .cta h3{font-size:22px}
+  .cta p{font-size:13px;line-height:1.5}
   .cta code,.cta-cmd span{font-size:11px!important}
-  /* Section headers */
-  .sh h2{font-size:18px}
-  .sh p{font-size:11px}
+
+  /* Section headers — breathing room */
+  .sh{margin-bottom:24px}
+  .sh h2{font-size:20px}
+  .sh p{font-size:12px;line-height:1.5}
+
   /* Share bar */
   .share-bar{bottom:16px;right:16px}
   .share-btn{width:36px;height:36px;border-radius:10px}
   .share-btn svg{width:16px;height:16px}
-  /* Nav */
+
+  /* Nav — compact but readable */
   .site-nav-inner{padding:0 .75rem}
   .site-nav-logo{font-size:.75rem}
   .site-nav-links{gap:.75rem;font-size:.625rem}
+
   /* Footer */
-  .footer{padding:32px 0 24px!important}
-  /* Divider spacing */
-  .divider{margin:0}
+  .footer{padding:40px 0 32px!important}
+
   /* Avatar */
   .hero-avatar{width:72px;height:72px}
+
+  /* Social row */
+  .social-row{margin-top:18px;gap:10px}
+  .social-link{width:36px;height:36px;border-radius:10px}
+  .social-link svg{width:18px;height:18px}
 }
 </style>
 </head>

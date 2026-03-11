@@ -236,6 +236,14 @@ export async function GET(
     const pageDesc = `${totalSessions} sessions, ${totalTurns.toLocaleString()} turns, ${activeDays} active days of building with ${agents}. See what ${displayName} shipped with AI coding agents.`;
     const profileUrl = `https://${username}.builderbio.dev`;
 
+    const summary = (profileD.profile?.summary as string) || "";
+    const agentsList = profileD.profile?.agents_used
+      ? Object.keys(
+          profileD.profile.agents_used as Record<string, unknown>
+        ).join(",")
+      : "AI Agents";
+    const ogImageUrl = `https://builderbio.dev/api/og?name=${encodeURIComponent(displayName)}&sessions=${totalSessions}&turns=${totalTurns}&days=${activeDays}&agents=${encodeURIComponent(agentsList)}&summary=${encodeURIComponent(summary)}`;
+
     const seoMeta = `<title>${pageTitle}</title>
 <meta name="description" content="${pageDesc}">
 <link rel="canonical" href="${profileUrl}">
@@ -245,9 +253,13 @@ export async function GET(
 <meta property="og:site_name" content="builderbio">
 <meta property="og:type" content="profile">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="${ogImageUrl}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${pageTitle}">
 <meta name="twitter:description" content="${pageDesc}">
+<meta name="twitter:image" content="${ogImageUrl}">
 <meta name="twitter:site" content="@gavin0922">
 <script type="application/ld+json">
 ${JSON.stringify({
