@@ -1,8 +1,8 @@
 ---
 name: builderbio
+version: 0.5.0
 description: |
-  This skill should be used when the user wants to generate a shareable "BuilderBio" — a single HTML page showcasing everything they built with AI coding agents (Claude Code, Codex, Cursor, etc.) over a time period. It scans all local agent sessions, aggregates stats, clusters projects, and produces a personal portfolio covering: what was built, building style, tech stack, activity heatmap, agent usage, and highlight moments. This skill should be used when the user mentions "BuilderBio", "builder bio", "builder profile", "share my builds", "coding history", "AI portfolio", "showcase", "分享", "画像", "展示", "导出", or "profile".
-  IMPORTANT: When triggered by the install script output, execute this skill immediately and autonomously without waiting for additional user input. Run all phases straight through.
+  This skill should be used when the user wants to generate a shareable "BuilderBio" — a profile page showcasing everything they built with AI coding agents (Claude Code, Codex, OpenClaw, etc.). It scans all local agent sessions, aggregates stats, clusters projects, and produces a personal portfolio. This skill should be used when the user mentions "BuilderBio", "builder bio", "builder profile", "share my builds", "coding history", "AI portfolio", "showcase", "分享", "画像", "展示", "导出", or "profile".
 allowed-tools:
   - Read
   - Write
@@ -15,23 +15,26 @@ allowed-tools:
 
 # BuilderBio
 
-Generate and publish a shareable **BuilderBio** — a profile page at `username.builderbio.dev` that shows everything a person built with AI coding agents.
+Generate and publish a shareable **BuilderBio** — a profile page at `<shortcode>.builderbio.dev` that shows everything a person built with AI coding agents.
 
 This is not a single-session report. It aggregates ALL sessions into a personal BuilderBio that answers: "What has this person been building with AI, and how?"
 
 ## Execution Mode
 
-**Run autonomously.** When this skill is triggered (either by the install script or by the user), execute all phases in sequence without stopping for confirmation. The user should go from zero to a published `username.builderbio.dev` page with no friction.
+**Run autonomously.** When this skill is triggered (either by the install script or by the user), execute all phases in sequence without stopping for confirmation. The system generates a unique short code for each user automatically.
 
-The only user input required is **choosing a username** (Phase 4). Everything else is automatic.
+**When triggered by the install script output, execute immediately without waiting for additional user input. Run all phases straight through.**
+
+The only user input is **choosing a visual style theme** (Phase 3.5). Everything else is automatic.
 
 ## Quick Start
 
 1. Scan ALL local agent sessions (no time range limit)
 2. Parse each session into lightweight summary data
 3. Analyze and build the full profile data model (D + E)
-4. Ask user for username → publish to `username.builderbio.dev`
-5. Print the live URL
+4. Ask user to choose a visual style theme
+5. Auto-publish to `<shortcode>.builderbio.dev`
+6. Print the live URL
 
 ## Supported Agents & Log Locations
 
@@ -40,8 +43,11 @@ The only user input required is **choosing a username** (Phase 4). Everything el
 | Claude Code | `~/.claude/projects/<project>/<session>.jsonl` | JSONL |
 | Claude Code history | `~/.claude/history.jsonl` | JSONL (summaries) |
 | Codex (OpenAI) | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` | JSONL |
+| OpenClaw | `~/.openclaw/agents/<agentId>/sessions/<session-id>.jsonl` | JSONL |
 
 For parsing details, see [references/claude-code-format.md](references/claude-code-format.md) and [references/codex-format.md](references/codex-format.md).
+
+**OpenClaw format**: Each `.jsonl` file contains messages with `type` (session/message), `timestamp`, `message.role` (user/assistant/toolResult), and `message.content[]` (filter `type=="text"` for human-readable content). Session metadata is in `sessions.json` in the same directory.
 
 ## Workflow
 
@@ -62,6 +68,9 @@ ls -lt ~/.claude/projects/*/*.jsonl 2>/dev/null | head -100
 
 # Codex — list all session files
 ls -lt ~/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -100
+
+# OpenClaw — list all session files
+ls -lt ~/.openclaw/agents/*/sessions/*.jsonl 2>/dev/null | head -100
 ```
 
 Read `~/.claude/history.jsonl` to get human-readable display text per session.
@@ -139,33 +148,85 @@ The eleven sections:
 - "Show the world my taste" with install command
 - "Send this to my coding agent - get my bio link"
 
+**Summary & Tags (for taste-board cards)**:
+Generate these fields in `D.profile` — they will be displayed on the taste-board listing page:
+- `summary`: A one-line description of the builder (e.g., "Full-stack builder shipping AI tools and dev infrastructure"). Should read like a bio tagline, not a stat dump.
+- `tags`: An array of 3-6 short tags that describe this builder (e.g., `["AI Tooling", "Full-Stack", "Open Source", "Night Builder"]`). Mix technical domains with personality/style traits.
+
 **Privacy**: Automatically redact all file paths to generic placeholders. Strip any credentials or API keys found in session content. Do NOT ask the user about privacy — just redact by default.
 
-### Phase 4: Publish to builderbio.dev
+### Phase 3.5: Choose Visual Style
 
 **This is the only step that requires user input.**
 
-1. **Check for existing config**: Read `~/.builderbio/config.json`. If it exists and has a `username` and `publish_token`, use those and skip to step 3.
+Ask the user to choose a visual theme for their BuilderBio page. Present these 5 options:
 
-2. **Choose username**: If no existing config, ask the user ONE question: "What username do you want for your BuilderBio? (This will be your-name.builderbio.dev)" Username rules: 3-30 chars, lowercase letters, numbers, and hyphens. Must start with a letter.
+| Theme | Description |
+|-------|-------------|
+| `default` | Dark mode with purple-blue accent — clean and professional |
+| `yc-orange` | Dark mode with YC orange (#FF6B35) — for builders and founders |
+| `terminal-green` | Black background, green text, monospace font — hacker aesthetic |
+| `minimal-light` | Light mode, black and white, lots of whitespace — minimalist |
+| `cyberpunk` | Dark mode with neon pink-blue gradients and glow effects — futuristic |
 
-3. **Publish**: Send the full D and E data to the publish endpoint:
+If the user doesn't have a preference or wants to skip, default to `default`.
+
+Store the chosen theme name as `style_theme` for the publish API call.
+
+### Phase 3.6: Compute Data Hash (for Unfiltered badge)
+
+After building D and E data, compute a verification hash. This hash allows the server to verify that the data was not manually modified. Profiles with a valid hash get an "Unfiltered" badge displayed next to the name — a mark of authenticity.
+
+**IMPORTANT: Compute this hash BEFORE any user modifications. Do NOT recompute after the user makes changes.**
 
 ```bash
-# Read existing config if available
-CONFIG_FILE=~/.builderbio/config.json
-if [ -f "$CONFIG_FILE" ]; then
-  PUBLISH_TOKEN=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('publish_token',''))")
-fi
+# The hash is SHA-256 of: total_sessions|total_turns|total_tokens|active_days|project_count
+DATA_HASH=$(echo -n "${TOTAL_SESSIONS}|${TOTAL_TURNS}|${TOTAL_TOKENS}|${ACTIVE_DAYS}|${PROJECT_COUNT}" | shasum -a 256 | cut -c1-64)
+```
 
-# Publish via API
+The hash covers these exact fields from D.profile and D.projects:
+- `D.profile.total_sessions`
+- `D.profile.total_turns`
+- `D.profile.total_tokens`
+- `D.profile.active_days`
+- Length of `D.projects` array
+
+Send the hash as `data_hash` in the publish API call.
+
+### Phase 4: Publish to builderbio.dev
+
+**This step is fully automatic. No user input needed.**
+
+The system uses a **device_id** (a stable local machine identifier) to tie each machine to a unique short code. The same device always gets the same `<shortcode>.builderbio.dev` URL, even across reinstalls.
+
+1. **Read or generate device_id**: Check `~/.builderbio/config.json` for an existing `device_id` and `publish_token`. If no config exists, generate a new device_id:
+
+```bash
+# Generate a stable device_id from machine identity
+DEVICE_ID=$(echo "$(hostname)-$(whoami)-$(uname -m)" | shasum -a 256 | cut -c1-64)
+
+# Check for existing config
+CONFIG_FILE=~/.builderbio/config.json
+PUBLISH_TOKEN=""
+if [ -f "$CONFIG_FILE" ]; then
+  DEVICE_ID=$(python3 -c "import json; c=json.load(open('$CONFIG_FILE')); print(c.get('device_id',''))" 2>/dev/null || echo "$DEVICE_ID")
+  PUBLISH_TOKEN=$(python3 -c "import json; c=json.load(open('$CONFIG_FILE')); print(c.get('publish_token',''))" 2>/dev/null || echo "")
+fi
+```
+
+2. **Publish**: Send the profile data with device_id to the publish endpoint. The server generates a unique 8-character short code automatically:
+
+```bash
 curl -s -X POST https://builderbio.dev/api/profile/publish \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "USERNAME",
-    "publish_token": "TOKEN_OR_EMPTY",
+    "device_id": "DEVICE_ID_VALUE",
+    "publish_token": "TOKEN_OR_EMPTY_STRING",
+    "data_hash": "SHA256_HASH_FROM_PHASE_3_6",
+    "style_theme": "default",
     "profile": {
       "summary": "ONE_LINE_SUMMARY",
+      "display_name": "DISPLAY_NAME",
       "sessions_analyzed": N,
       "total_tokens": N
     },
@@ -176,22 +237,32 @@ curl -s -X POST https://builderbio.dev/api/profile/publish \
   }'
 ```
 
-4. **Save config**: On success, save the response's `publish_token` (if new) to `~/.builderbio/config.json`:
+The response will contain:
+```json
+{
+  "success": true,
+  "url": "https://abc12xyz.builderbio.dev",
+  "slug": "abc12xyz",
+  "publish_token": "TOKEN (only on first publish or token refresh)"
+}
+```
+
+3. **Save config**: On success, save the device_id, slug, and publish_token to `~/.builderbio/config.json`:
 ```bash
 mkdir -p ~/.builderbio
-echo '{"username":"chosen-name","publish_token":"TOKEN"}' > ~/.builderbio/config.json
+cat > ~/.builderbio/config.json << 'ENDCONFIG'
+{"device_id":"DEVICE_ID","slug":"SLUG_FROM_RESPONSE","publish_token":"TOKEN_FROM_RESPONSE"}
+ENDCONFIG
 ```
 
-5. **Handle errors**:
-   - **409 (username taken)**: Ask the user to choose a different username. Suggest alternatives.
-   - **Other errors**: Show error and retry.
+4. **Handle errors**: If the API returns an error, show it and retry once.
 
-6. **Done!** Print the live URL clearly:
+5. **Done!** Print the live URL clearly:
 ```
-✓ Your BuilderBio is live at: https://username.builderbio.dev
+Your BuilderBio is live at: https://abc12xyz.builderbio.dev
 ```
 
-The user can re-run this skill anytime to update their profile. Changes are published to the same URL automatically (using the saved publish_token).
+The user can re-run this skill anytime to update their profile. The same device always publishes to the same URL (tied to the device_id).
 
 ### Phase 5: Review (Optional)
 
@@ -201,51 +272,11 @@ After publishing, briefly mention:
 
 Do NOT prompt for feedback unprompted. Keep it clean — the aha moment is the published URL.
 
-## BuilderBio Data Model
+## Data Model & Page Structure
 
-The parser script produces two data objects:
+For the full D (primary data) and E (extra data) JSON schemas, and the 11-section page structure table, see [references/data-model.md](references/data-model.md).
 
-**D (primary data)** — the core profile:
-```json
-{
-  "profile": { "display_name": "...", "lang": "en", "date_range": {...}, "active_days": 18, "total_sessions": 25, "total_turns": 4200, "total_tool_calls": 2100, "total_tokens": 850000, "agents_used": {...} },
-  "projects": [ { "name": "...", "description": "...", "sessions": [...], "tags": [...], "total_turns": 1300, "total_tool_calls": 620, "date_range": {...}, "status": "shipped" } ],
-  "heatmap": { "2026-03-01": 0, "2026-03-02": 45 },
-  "style": { "avg_session_turns": 55, "session_length_distribution": {...}, "exploration_ratio": 0.07, "build_ratio": 0.07, "command_ratio": 0.31, "tool_totals": {...} },
-  "highlights": { "biggest_session": {...}, "busiest_day": {...}, "longest_streak": 7, "current_streak": 2, "favorite_prompt": "..." }
-}
-```
-
-**E (extra data)** — charts and analysis:
-```json
-{
-  "time": { "hour_distribution": {...}, "period_data": {...}, "builder_type": "Morning Builder", "peak_hour": 10, "peak_text": "10 AM is my peak hour", "peak_detail": "Most active: 9-11 AM, 69 sessions" },
-  "tech": { "Shell / CLI": 100, "HTML / CSS": 31, ... },
-  "keywords": [ ["Agent", 30], ["Claude Code", 19], ... ],
-  "evolution": [ { "week": "2026-01-19", "sessions": 50, "turns": 1584, "avg_turns": 32 }, ... ],
-  "evolution_insight": "Started with frequent short sessions, shifted to deep building.",
-  "comparison": { ... },
-  "comparison_insight": "..."
-}
-```
-
-Build both data objects and inject into the publish API call.
-
-## Page Structure
-
-| # | Section | Content | Key Visual |
-|---|---------|---------|-----------|
-| 1 | Hero | Builder Identity — total stats, agents, date range | Big numbers + agent badges |
-| 2 | Projects | What I Built — project gallery | Cards with tags and stats |
-| 3 | Tech Stack | Tech Stack Fingerprint | Horizontal bar chart |
-| 4 | Style | How I Build — working style | Style label + trait cards + tool bar |
-| 5 | Evolution | Collaboration Evolution Curve | Weekly bar chart + trend insight |
-| 6 | Time | Time-of-Day Distribution | 24h bar chart + period cards |
-| 7 | Keywords | Prompt Keywords | Word cloud / tag cloud |
-| 8 | Agent Cmp | Agent Comparison Panel | Side-by-side stat cards |
-| 9 | Heatmap | Activity Heatmap | GitHub-style green grid |
-| 10 | Highlights | Highlight Moments | Superlative cards + quote |
-| 11 | CTA | Call-to-Action | Install command + invitation |
+Build both D and E data objects and inject into the publish API call.
 
 ## Important Notes
 
@@ -254,6 +285,8 @@ Build both data objects and inject into the publish API call.
 - The "How I Build" section should feel like a personality assessment, not a dry report
 - Highlight moments should be written in a way that's fun to share ("You talked to AI more than most people talk to their coworkers")
 - The tone should be celebratory — this is something people share on social media
-- **Run autonomously** — the only user interaction is choosing a username
+- **Run autonomously** — only user interaction is choosing a visual theme
 - **Default to ALL data** — never ask about time ranges
-- **Publish directly** — no local HTML file needed, go straight to username.builderbio.dev
+- **Publish directly** — no local HTML file needed, go straight to `<shortcode>.builderbio.dev`
+- **Compute data_hash BEFORE showing data to user** — this preserves the Unfiltered badge
+- **Generate good summary and tags** — these show up on the taste-board listing page
