@@ -2,8 +2,79 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { profiles, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { sha256 } from "@/lib/auth";
 import { readFile } from "fs/promises";
 import { join } from "path";
+
+// Theme CSS variable overrides
+const THEMES: Record<
+  string,
+  {
+    vars: string;
+    glow: string;
+    badgeBorder: string;
+    ctaGradient: string;
+    bodyOverrides?: string;
+  }
+> = {
+  default: {
+    vars: "--ac:#818cf8;--acd:#6366f1;--acb:rgba(99,102,241,.08)",
+    glow: "rgba(99,102,241,.06)",
+    badgeBorder: "rgba(99,102,241,.15)",
+    ctaGradient: "rgba(99,102,241,.06),rgba(52,211,153,.04)",
+  },
+  "yc-orange": {
+    vars: "--ac:#FF6B35;--acd:#E55A2B;--acb:rgba(255,107,53,.08)",
+    glow: "rgba(255,107,53,.06)",
+    badgeBorder: "rgba(255,107,53,.15)",
+    ctaGradient: "rgba(255,107,53,.06),rgba(52,211,153,.04)",
+  },
+  "terminal-green": {
+    vars: "--ac:#00FF41;--acd:#00CC33;--acb:rgba(0,255,65,.08)",
+    glow: "rgba(0,255,65,.06)",
+    badgeBorder: "rgba(0,255,65,.15)",
+    ctaGradient: "rgba(0,255,65,.06),rgba(0,204,51,.04)",
+    bodyOverrides:
+      "font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code',monospace",
+  },
+  "minimal-light": {
+    vars: "--ac:#111111;--acd:#333333;--acb:rgba(0,0,0,.05)",
+    glow: "rgba(0,0,0,.03)",
+    badgeBorder: "rgba(0,0,0,.1)",
+    ctaGradient: "rgba(0,0,0,.03),rgba(0,0,0,.01)",
+  },
+  cyberpunk: {
+    vars: "--ac:#f472b6;--acd:#ec4899;--acb:rgba(244,114,182,.08)",
+    glow: "rgba(244,114,182,.06)",
+    badgeBorder: "rgba(244,114,182,.15)",
+    ctaGradient: "rgba(244,114,182,.06),rgba(96,165,250,.04)",
+  },
+};
+
+// Minimal Light needs full background/text color overrides
+const MINIMAL_LIGHT_CSS = `
+:root{--bg:#fafafa;--s1:#ffffff;--s2:#f5f5f5;--s3:#eeeeee;--bd:#e0e0e0;--bd2:#d0d0d0;--t:#111111;--t2:#444444;--tm:#888888;--ac:#111111;--acd:#333333;--acb:rgba(0,0,0,.05);--g:#059669;--gd:rgba(5,150,105,.1);--y:#d97706;--yd:rgba(217,119,6,.1);--b:#2563eb;--bd3:rgba(37,99,235,.1);--p:#7c3aed;--pd:rgba(124,58,237,.1);--o:#ea580c;--od:rgba(234,88,12,.1);--pk:#db2777;--r:#dc2626}
+.hm-0{background:#eeeeee}.hm-1{background:rgba(5,150,105,.18)}.hm-2{background:rgba(5,150,105,.38)}.hm-3{background:rgba(5,150,105,.6)}.hm-4{background:rgba(5,150,105,.88)}
+`;
+
+/**
+ * Compute the verification hash from BuilderBio D data.
+ * Must match the client-side computation in SKILL.md.
+ */
+async function computeVerificationHash(
+  D: Record<string, unknown>
+): Promise<string> {
+  const profile = D.profile as Record<string, unknown> | undefined;
+  const projects = D.projects as unknown[] | undefined;
+  const key = [
+    profile?.total_sessions ?? 0,
+    profile?.total_turns ?? 0,
+    profile?.total_tokens ?? 0,
+    profile?.active_days ?? 0,
+    projects?.length ?? 0,
+  ].join("|");
+  return sha256(key);
+}
 
 export async function GET(
   _req: NextRequest,
@@ -11,9 +82,12 @@ export async function GET(
 ) {
   const { username } = await params;
 
-  // Only allow alphanumeric + hyphens
-  if (!/^[a-z][a-z0-9-]*[a-z0-9]$/.test(username) && !/^[a-z0-9]{3}$/.test(username)) {
-    return NextResponse.json({ error: "invalid username" }, { status: 400 });
+  // Allow alphanumeric + hyphens (usernames) and 8-char short codes
+  if (
+    !/^[a-z0-9][a-z0-9-]{0,38}[a-z0-9]$/.test(username) &&
+    !/^[a-z0-9]{1,8}$/.test(username)
+  ) {
+    return NextResponse.json({ error: "invalid identifier" }, { status: 400 });
   }
 
   try {
@@ -22,6 +96,9 @@ export async function GET(
         username: users.username,
         displayName: users.displayName,
         builderBioData: profiles.builderBioData,
+        dataHash: profiles.dataHash,
+        styleTheme: profiles.styleTheme,
+        updatedAt: profiles.updatedAt,
       })
       .from(users)
       .innerJoin(profiles, eq(profiles.userId, users.id))
@@ -29,53 +106,101 @@ export async function GET(
       .limit(1);
 
     if (results.length === 0) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Profile not found" },
+        { status: 404 }
+      );
     }
 
     const result = results[0];
-    const bioData = result.builderBioData as { D: Record<string, unknown>; E: Record<string, unknown> } | null;
+    const bioData = result.builderBioData as {
+      D: Record<string, unknown>;
+      E: Record<string, unknown>;
+    } | null;
 
     if (!bioData || !bioData.D || !bioData.E) {
-      // Fall back to simple profile page if no BuilderBio data
       return NextResponse.json(
         { error: "BuilderBio data not available" },
         { status: 404 }
       );
     }
 
+    // Verify Unfiltered status
+    let isUnfiltered = false;
+    if (result.dataHash) {
+      const expectedHash = await computeVerificationHash(bioData.D);
+      isUnfiltered = result.dataHash === expectedHash;
+    }
+
+    // Determine theme
+    const themeName = result.styleTheme || "default";
+    const theme = THEMES[themeName] || THEMES["default"];
+
+    // Generate time
+    const genTime = result.updatedAt
+      ? result.updatedAt.toISOString().split("T")[0]
+      : "";
+
     // Read the template
-    const templatePath = join(process.cwd(), "public", "skills", "builderbio", "assets", "template.html");
+    const templatePath = join(
+      process.cwd(),
+      "public",
+      "skills",
+      "builderbio",
+      "assets",
+      "template.html"
+    );
     let template = await readFile(templatePath, "utf-8");
 
-    // Apply YC orange theme overrides
+    // Apply theme CSS variables
     template = template.replace(
       /--ac:#818cf8;--acd:#6366f1;--acb:rgba\(99,102,241,\.08\)/,
-      "--ac:#FF6B35;--acd:#E55A2B;--acb:rgba(255,107,53,.08)"
+      theme.vars
     );
-    // Fix hero glow
     template = template.replace(
       /rgba\(99,102,241,\.06\)0%/g,
-      "rgba(255,107,53,.06)0%"
+      `${theme.glow}0%`
     );
-    // Fix badge border
     template = template.replace(
       /rgba\(99,102,241,\.15\)/g,
-      "rgba(255,107,53,.15)"
+      theme.badgeBorder
     );
-    // Fix avatar shadow
-    template = template.replace(
-      /rgba\(99,102,241,\.15\)/g,
-      "rgba(255,107,53,.15)"
-    );
-    // Fix CTA gradient
     template = template.replace(
       /rgba\(99,102,241,\.06\),rgba\(52,211,153,\.04\)/,
-      "rgba(255,107,53,.06),rgba(52,211,153,.04)"
+      theme.ctaGradient
     );
+
+    // Apply body font override for terminal-green
+    if (theme.bodyOverrides) {
+      template = template.replace(
+        "body{font-family:-apple-system,BlinkMacSystemFont,",
+        `body{${theme.bodyOverrides};font-family:-apple-system,BlinkMacSystemFont,`
+      );
+      // Actually replace the whole font-family for terminal
+      template = template.replace(
+        /body\{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",system-ui,sans-serif;/,
+        `body{${theme.bodyOverrides};`
+      );
+    }
+
+    // Inject full CSS override for Minimal Light theme
+    if (themeName === "minimal-light") {
+      template = template.replace("</style>", `${MINIMAL_LIGHT_CSS}</style>`);
+    }
+
+    // Cyberpunk: add neon glow effects
+    if (themeName === "cyberpunk") {
+      const cyberpunkCSS = `
+.hero h1{text-shadow:0 0 20px rgba(244,114,182,.3),0 0 40px rgba(244,114,182,.1)}
+.stat .num{text-shadow:0 0 12px rgba(244,114,182,.2)}
+.style-label{background:linear-gradient(135deg,#f472b6,#60a5fa)!important;-webkit-background-clip:text;background-clip:text}
+`;
+      template = template.replace("</style>", `${cyberpunkCSS}</style>`);
+    }
 
     // Replace footer to match site-wide footer
     template = template.replace(
-      '<div class="footer" id="footer-text"></div>',
+      /<div class="footer" id="footer-text"[^>]*>[\s\S]*?<\/div>/,
       `<div class="footer" style="padding:24px 0;text-align:center;font-size:12px;color:var(--tm)">
   <p style="margin:0 0 8px">The bio link for builders who ship with AI</p>
   <div style="display:flex;align-items:center;justify-content:center;gap:16px">
@@ -89,20 +214,23 @@ export async function GET(
 </div>`
     );
 
-    // Update the footer JS to not overwrite the static footer
+    // Update the footer JS to not overwrite
     template = template.replace(
-      `document.getElementById('footer-text').innerHTML=t('footer')+' · '+new Date().toLocaleString('en-US');`,
+      /document\.getElementById\('footer-text'\)\.innerHTML=.*?;/,
       `// footer rendered in HTML`
     );
 
     // Inject SEO meta tags
     const profileD = bioData.D as Record<string, Record<string, unknown>>;
-    const displayName = (profileD.profile?.display_name as string) || username;
+    const displayName =
+      (profileD.profile?.display_name as string) || username;
     const totalSessions = profileD.profile?.total_sessions || 0;
     const totalTurns = profileD.profile?.total_turns || 0;
     const activeDays = profileD.profile?.active_days || 0;
     const agents = profileD.profile?.agents_used
-      ? Object.keys(profileD.profile.agents_used as Record<string, unknown>).join(" and ")
+      ? Object.keys(
+          profileD.profile.agents_used as Record<string, unknown>
+        ).join(" and ")
       : "AI coding agents";
     const pageTitle = `${displayName}'s BuilderBio — What I Built with AI`;
     const pageDesc = `${totalSessions} sessions, ${totalTurns.toLocaleString()} turns, ${activeDays} active days of building with ${agents}. See what ${displayName} shipped with AI coding agents.`;
@@ -125,12 +253,15 @@ export async function GET(
 ${JSON.stringify({
       "@context": "https://schema.org",
       "@type": "ProfilePage",
-      mainEntity: { "@type": "Person", name: displayName, url: profileUrl },
+      mainEntity: {
+        "@type": "Person",
+        name: displayName,
+        url: profileUrl,
+      },
       description: pageDesc,
     })}
 </script>`;
 
-    // Replace the generic <title> with full SEO head
     template = template.replace("<title>BuilderBio</title>", seoMeta);
 
     // Inject data
@@ -142,6 +273,8 @@ ${JSON.stringify({
       "__EXTRA_DATA_PLACEHOLDER__",
       JSON.stringify(bioData.E)
     );
+    template = template.replace("__UNFILTERED__", String(isUnfiltered));
+    template = template.replace("__GEN_TIME__", genTime);
 
     return new NextResponse(template, {
       status: 200,

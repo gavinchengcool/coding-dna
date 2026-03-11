@@ -19,9 +19,13 @@ export const users = pgTable(
     avatarColor: varchar("avatar_color", { length: 7 }).default("#00D084"),
     role: varchar("role", { length: 20 }).default("user").notNull(),
     publishTokenHash: varchar("publish_token_hash", { length: 64 }),
+    deviceIdHash: varchar("device_id_hash", { length: 64 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (t) => [uniqueIndex("users_username_idx").on(t.username)]
+  (t) => [
+    uniqueIndex("users_username_idx").on(t.username),
+    index("users_device_id_hash_idx").on(t.deviceIdHash),
+  ]
 );
 
 export const authTokens = pgTable(
@@ -71,6 +75,8 @@ export const profiles = pgTable(
     searchProfile: jsonb("search_profile"),
     searchVector: text("search_vector"),
     builderBioData: jsonb("builder_bio_data"),
+    dataHash: varchar("data_hash", { length: 64 }),
+    styleTheme: varchar("style_theme", { length: 20 }).default("default"),
     sessionsAnalyzed: integer("sessions_analyzed").default(0),
     totalTokens: integer("total_tokens").default(0),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

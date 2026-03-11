@@ -2,8 +2,11 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
 <title>BuilderBio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:#050507;--s1:#0c0c10;--s2:#131318;--s3:#1a1a21;
@@ -18,7 +21,30 @@
   --pk:#f472b6;--r:#f87171;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html{overflow-x:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;max-width:100vw}
+
+/* NAV BAR */
+.site-nav{position:sticky;top:0;z-index:50;background:rgba(5,5,7,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.site-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--bd2),transparent)}
+.site-nav-inner{max-width:72rem;margin:0 auto;display:flex;height:3rem;align-items:center;justify-content:space-between;padding:0 1rem}
+.site-nav-logo{display:flex;align-items:center;gap:.5rem;color:var(--tm);font-weight:700;font-size:.875rem;line-height:1.25rem;letter-spacing:.025em;text-decoration:none;transition:color .2s;font-family:'JetBrains Mono','Fira Code','SF Mono',ui-monospace,monospace}
+.site-nav-logo:hover{color:var(--ac)}
+.site-nav-logo .tilde{color:var(--bd2)}
+.site-nav-links{display:flex;align-items:center;gap:1rem;font-size:.75rem;line-height:1rem;color:var(--tm);font-family:'JetBrains Mono','Fira Code','SF Mono',ui-monospace,monospace}
+.site-nav-links a{color:inherit;text-decoration:none;transition:color .2s}
+.site-nav-links a:hover{color:var(--ac)}
+.site-nav-links .sep{color:var(--bd2)}
+.site-nav-links .active{color:var(--ac)}
+
+/* SHARE BAR */
+.share-bar{position:fixed;bottom:24px;right:24px;z-index:40;display:flex;gap:8px;align-items:center}
+.share-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:var(--s2);border:1px solid var(--bd);color:var(--t2);transition:all .25s;cursor:pointer;text-decoration:none}
+.share-btn:hover{border-color:var(--bd2);color:var(--t);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.share-btn svg{width:18px;height:18px;fill:currentColor}
+.share-btn .share-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--s3);color:var(--t2);font-size:11px;padding:4px 10px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;border:1px solid var(--bd)}
+.share-btn:hover .share-tooltip{opacity:1}
+.share-btn.copied{border-color:var(--g);color:var(--g)}
 .c{max-width:880px;margin:0 auto;padding:0 24px}
 section{padding:60px 0}
 .divider{height:1px;background:linear-gradient(90deg,transparent,var(--bd),transparent)}
@@ -28,6 +54,11 @@ section{padding:60px 0}
 .hero{padding:80px 0 60px;text-align:center;position:relative}
 .hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.06)0%,rgba(52,211,153,.03)40%,transparent 70%);pointer-events:none}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:100px;font-size:12px;font-weight:600;color:var(--ac);background:var(--acb);border:1px solid rgba(99,102,241,.15);margin-bottom:24px;letter-spacing:.3px}
+.unfiltered-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;color:#34d399;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);vertical-align:middle;margin-left:8px;cursor:default;position:relative}
+.unfiltered-badge svg{width:12px;height:12px;fill:currentColor;flex-shrink:0}
+.unfiltered-badge .uf-tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--s3);color:var(--t2);font-size:11px;font-weight:400;padding:6px 12px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;border:1px solid var(--bd)}
+.unfiltered-badge:hover .uf-tip{opacity:1}
+.gen-time{font-size:11px;color:var(--tm);margin-top:6px}
 .hero h1{font-size:48px;font-weight:800;letter-spacing:-.04em;background:linear-gradient(135deg,var(--t) 0%,var(--t2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
 .hero .sub{font-size:15px;color:var(--tm);margin-bottom:40px}
 .stats-row{display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
@@ -146,16 +177,124 @@ section{padding:60px 0}
 
 .footer{text-align:center;padding:48px 0 40px;font-size:12px;color:var(--tm)}
 
+/* AGENT START DATES */
+.agent-since{font-size:10px;color:var(--tm);margin-top:2px;display:block;letter-spacing:.3px}
+
 @media(max-width:640px){
-  .hero h1{font-size:36px}.stats-row{gap:24px}.stat .num{font-size:32px}
-  .pgrid{grid-template-columns:1fr}.traits{grid-template-columns:repeat(2,1fr)}
-  .hl-grid{grid-template-columns:1fr}.cmp-grid{grid-template-columns:1fr}
-  .period-grid{grid-template-columns:repeat(2,1fr)}.c{padding:0 16px}section{padding:40px 0}
-  .radar-label{width:100px;font-size:11px}
+  /* Each section as a "screen" — generous vertical spacing */
+  section{padding:48px 0;min-height:auto}
+  .c{padding:0 20px}
+  /* Hero */
+  .hero{padding:60px 0 48px}
+  .hero h1{font-size:28px;letter-spacing:-.03em}
+  .hero .sub{font-size:13px;margin-bottom:28px}
+  .stats-row{gap:20px}
+  .stat .num{font-size:28px}
+  .stat .lbl{font-size:10px;letter-spacing:.8px}
+  .agent-row{gap:6px;margin-top:20px}
+  .agent-chip{font-size:11px;padding:5px 12px}
+  /* Projects */
+  .pgrid{grid-template-columns:1fr;gap:12px}
+  .pcard{padding:16px}
+  .pname{font-size:14px}
+  .pdesc{font-size:12px}
+  /* Style */
+  .traits{grid-template-columns:1fr 1fr;gap:8px}
+  .trait{padding:14px}
+  .trait .tval{font-size:18px}
+  .style-label{font-size:24px}
+  .style-sub{font-size:12px}
+  .tleg{gap:8px}
+  .tleg-i{font-size:10px}
+  /* Tech Radar */
+  .radar-label{width:80px;font-size:10px}
+  .radar-bar-bg{height:16px}
+  .radar-val{font-size:10px;width:30px}
+  .radar-row{gap:8px;margin-bottom:8px}
+  /* Evolution */
+  .evo-chart{height:140px;gap:3px}
+  .evo-val{font-size:9px}
+  .evo-label{font-size:9px}
+  /* Time */
+  .time-bars{height:80px;gap:2px}
+  .time-type .big{font-size:22px}
+  .time-type .small{font-size:12px}
+  .period-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .period-card{padding:10px}
+  .period-card .p-val{font-size:16px}
+  .period-card .p-name{font-size:10px}
+  /* Keywords */
+  .kw-cloud{gap:6px;padding:12px 0}
+  .kw{padding:4px 12px}
+  /* Agent Comparison */
+  .cmp-grid{grid-template-columns:1fr;gap:12px}
+  .cmp-card{padding:18px}
+  .cmp-name{font-size:16px}
+  .cmp-stat .cv{font-size:18px}
+  /* Heatmap */
+  .hm-cell{width:10px;height:10px}
+  .hm-grid{gap:2px}
+  .hm-meta{flex-direction:column;gap:6px;font-size:11px}
+  /* Highlights */
+  .hl-grid{grid-template-columns:1fr;gap:10px}
+  .hl{padding:18px}
+  .hl .hl-v{font-size:24px}
+  .fav-prompt{padding:20px}
+  .fp-text{font-size:12px}
+  /* CTA */
+  .cta{padding:32px 20px}
+  .cta h3{font-size:20px}
+  .cta p{font-size:12px}
+  .cta code,.cta-cmd span{font-size:11px!important}
+  /* Section headers */
+  .sh h2{font-size:18px}
+  .sh p{font-size:11px}
+  /* Share bar */
+  .share-bar{bottom:16px;right:16px}
+  .share-btn{width:36px;height:36px;border-radius:10px}
+  .share-btn svg{width:16px;height:16px}
+  /* Nav */
+  .site-nav-inner{padding:0 .75rem}
+  .site-nav-logo{font-size:.75rem}
+  .site-nav-links{gap:.75rem;font-size:.625rem}
+  /* Footer */
+  .footer{padding:32px 0 24px!important}
+  /* Divider spacing */
+  .divider{margin:0}
+  /* Avatar */
+  .hero-avatar{width:72px;height:72px}
 }
 </style>
 </head>
 <body>
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <a href="https://builderbio.dev" class="site-nav-logo">
+      <span class="tilde">~/</span>builderbio
+    </a>
+    <div class="site-nav-links">
+      <a href="https://builderbio.dev/taste-board">/taste-board</a>
+      <span class="sep">·</span>
+      <a href="https://gavin.builderbio.dev" class="active">/built-by</a>
+    </div>
+  </div>
+</nav>
+
+<div class="share-bar" id="share-bar">
+  <button class="share-btn" id="share-copy" onclick="copyUrl()" title="Copy URL" style="position:relative">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+    <span class="share-tooltip">Copy URL</span>
+  </button>
+  <a class="share-btn" id="share-x" target="_blank" rel="noopener" title="Share on X" style="position:relative">
+    <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    <span class="share-tooltip">Share on X</span>
+  </a>
+  <a class="share-btn" id="share-linkedin" target="_blank" rel="noopener" title="Share on LinkedIn" style="position:relative">
+    <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    <span class="share-tooltip">Share on LinkedIn</span>
+  </a>
+</div>
+
 <div class="c">
 
 <section class="hero">
@@ -163,6 +302,7 @@ section{padding:60px 0}
   <h1 id="hero-title">BuilderBio</h1>
   <p class="tagline" id="hero-tagline" style="font-size:14px;color:var(--tm);margin-bottom:4px;display:none"></p>
   <p class="sub" id="date-range"></p>
+  <p class="gen-time" id="gen-time" style="display:none"></p>
   <div class="stats-row" id="stats-row"></div>
   <div class="agent-row" id="agent-row"></div>
   <div class="social-row" id="social-row"></div>
@@ -204,9 +344,33 @@ section{padding:60px 0}
 <script>
 const D = __PROFILE_DATA_PLACEHOLDER__;
 const E = __EXTRA_DATA_PLACEHOLDER__;
+const UNFILTERED = __UNFILTERED__;
+const GEN_TIME = "__GEN_TIME__";
 const TC={"Bash":"#fb923c","Read":"#60a5fa","Write":"#34d399","Edit":"#a78bfa","Grep":"#fbbf24","Glob":"#22d3ee","Task":"#f472b6","TaskUpdate":"#818cf8","TaskCreate":"#818cf8","write_stdin":"#c084fc","WebFetch":"#2dd4bf","WebSearch":"#2dd4bf","AskUserQuestion":"#f43f5e","view_image":"#f472b6","shell_command":"#fb923c","update_plan":"#818cf8","EnterPlanMode":"#a78bfa"};
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
 function fN(n){if(!n)return'0';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toString()}
+
+// === SHARE BUTTONS ===
+(function(){
+  const url=window.location.href;
+  const name=(D.profile&&D.profile.display_name)||'A builder';
+  const text=name+"'s BuilderBio — see what they shipped with AI coding agents";
+  const xBtn=document.getElementById('share-x');
+  const liBtn=document.getElementById('share-linkedin');
+  if(xBtn)xBtn.href='https://x.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url);
+  if(liBtn)liBtn.href='https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(url);
+})();
+function copyUrl(){
+  navigator.clipboard.writeText(window.location.href).then(function(){
+    var btn=document.getElementById('share-copy');
+    btn.classList.add('copied');
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="share-tooltip">Copied!</span>';
+    setTimeout(function(){
+      btn.classList.remove('copied');
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span class="share-tooltip">Copy URL</span>';
+    },2000);
+  });
+}
 
 // === I18N ===
 const LANG=(D.profile&&D.profile.lang)||'zh';
@@ -325,9 +489,10 @@ function t(key){return(I[key]&&I[key].en)||I[key]?.zh||key}
     av.style.display='block';
   }
   if(p.display_name){
-    const title=esc(p.display_name)+"'s BuilderBio";
+    const badge=UNFILTERED?'<span class="unfiltered-badge"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 15l-4-4 1.41-1.41L11 13.17l5.59-5.59L18 9l-7 7z"/></svg>Unfiltered<span class="uf-tip">All data is directly from agent session logs, unmodified</span></span>':'';
+    const title=esc(p.display_name)+"'s BuilderBio"+badge;
     document.getElementById('hero-title').innerHTML=title;
-    document.title=title;
+    document.title=esc(p.display_name)+"'s BuilderBio";
   }
   if(p.tagline){
     const tl=document.getElementById('hero-tagline');
@@ -339,10 +504,11 @@ function t(key){return(I[key]&&I[key].en)||I[key]?.zh||key}
     {v:p.total_sessions,l:t('sessions'),c:'ac'},{v:p.total_turns,l:t('turns'),c:'gc'},
     {v:p.total_tool_calls,l:t('tool_calls'),c:'yc'},{v:p.total_tokens,l:'Tokens',c:'bc'}
   ].map(s=>`<div class="stat"><div class="num ${s.c}">${fN(s.v)}</div><div class="lbl">${s.l}</div></div>`).join('');
-  const colors={'claude-code':'var(--ac)','codex':'var(--g)'};
-  document.getElementById('agent-row').innerHTML=Object.entries(p.agents_used).map(([n,d])=>
-    `<span class="agent-chip"><span class="agent-dot" style="background:${colors[n]||'var(--o)'}"></span>${esc(n)} · ${d.sessions} ${t('n_sessions')}</span>`
-  ).join('');
+  const colors={'claude-code':'var(--ac)','codex':'var(--g)','openclaw':'var(--p)','cursor':'var(--y)'};
+  document.getElementById('agent-row').innerHTML=Object.entries(p.agents_used).map(([n,d])=>{
+    const since=d.first_session?'<span class="agent-since">since '+d.first_session+'</span>':'';
+    return`<span class="agent-chip"><span class="agent-dot" style="background:${colors[n]||'var(--o)'}"></span><span>${esc(n)} · ${d.sessions} ${t('n_sessions')}${since}</span></span>`;
+  }).join('');
   // Social links
   const socialIcons={
     linkedin:'<svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>',
@@ -357,6 +523,12 @@ function t(key){return(I[key]&&I[key].en)||I[key]?.zh||key}
     document.getElementById('social-row').innerHTML=sl.map(s=>
       `<a class="social-link" href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(s.platform)}">${socialIcons[s.platform.toLowerCase()]||socialIcons.website}</a>`
     ).join('');
+  }
+  // Generate time
+  if(GEN_TIME && GEN_TIME!=='__GEN_TIME__'){
+    const gt=document.getElementById('gen-time');
+    gt.textContent='Generated on '+GEN_TIME;
+    gt.style.display='block';
   }
 })();
 

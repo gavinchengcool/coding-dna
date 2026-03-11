@@ -18,8 +18,8 @@ The profile consists of two data objects: **D** (primary data) and **E** (extra/
     "summary": "Full-stack builder shipping AI tools and dev infrastructure",
     "tags": ["AI Tooling", "Full-Stack", "Night Builder"],
     "agents_used": {
-      "claude-code": { "sessions": 20 },
-      "codex": { "sessions": 5 }
+      "claude-code": { "sessions": 20, "first_session": "2026-01-19" },
+      "codex": { "sessions": 5, "first_session": "2026-02-10" }
     }
   },
   "projects": [

@@ -7,7 +7,8 @@ export default function Titlebar() {
   const isTasteBoard = pathname.startsWith("/taste-board");
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-bg-secondary/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 bg-bg-secondary/80 backdrop-blur-sm" style={{position:'relative'}}>
+      <div style={{position:'absolute',bottom:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg, transparent, var(--border), transparent)'}} />
       <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4">
         <a
           href="https://builderbio.dev"

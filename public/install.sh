@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# builderbio installer v0.4.0
+# builderbio installer v0.5.0
 # Usage: curl -sfL https://builderbio.dev/install.sh | bash
 set -euo pipefail
 
-VERSION="0.4.0"
+VERSION="0.5.0"
 BASE_URL="${BUILDERBIO_URL:-https://builderbio.dev}"
 INSTALL_DIR="${HOME}/.builderbio"
 SKILL_DIR="${INSTALL_DIR}/skills/builderbio"
@@ -41,6 +41,27 @@ curl -sfL "${BASE_URL}/skills/builderbio/evals/evals.json" -o "${SKILL_DIR}/eval
 echo "  ✓ evals/"
 
 echo "  ✓ All files downloaded"
+
+# Generate device_id if not already set
+CONFIG_FILE="${INSTALL_DIR}/config.json"
+if [ -f "$CONFIG_FILE" ] && python3 -c "import json; c=json.load(open('$CONFIG_FILE')); assert c.get('device_id')" 2>/dev/null; then
+  echo "  ✓ Existing device identity found"
+else
+  DEVICE_ID=$(echo "$(hostname)-$(whoami)-$(uname -m)-$(date +%s)" | shasum -a 256 | cut -c1-64)
+  mkdir -p "${INSTALL_DIR}"
+  if [ -f "$CONFIG_FILE" ]; then
+    # Preserve existing config, just add device_id
+    python3 -c "
+import json
+c = json.load(open('$CONFIG_FILE'))
+c['device_id'] = '$DEVICE_ID'
+json.dump(c, open('$CONFIG_FILE', 'w'))
+" 2>/dev/null || echo "{\"device_id\":\"$DEVICE_ID\"}" > "$CONFIG_FILE"
+  else
+    echo "{\"device_id\":\"$DEVICE_ID\"}" > "$CONFIG_FILE"
+  fi
+  echo "  ✓ Device identity generated"
+fi
 
 # Link to Claude Code
 if [ -d "${HOME}/.claude" ]; then

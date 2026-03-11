@@ -99,7 +99,7 @@ The eleven sections:
 
 #### 1. Builder Identity (hero stats)
 - Total sessions, active days, total turns, total tool calls, tokens
-- Agent badges showing which tools the person uses
+- Agent badges showing which tools the person uses, including `first_session` date (earliest session date per agent)
 - Date range covered
 
 #### 2. What I Built (project gallery)
