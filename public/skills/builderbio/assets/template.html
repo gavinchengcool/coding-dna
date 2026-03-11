@@ -385,7 +385,7 @@ const UNFILTERED = __UNFILTERED__;
 const GEN_TIME = "__GEN_TIME__";
 const TC={"Bash":"#fb923c","Read":"#60a5fa","Write":"#34d399","Edit":"#a78bfa","Grep":"#fbbf24","Glob":"#22d3ee","Task":"#f472b6","TaskUpdate":"#818cf8","TaskCreate":"#818cf8","write_stdin":"#c084fc","WebFetch":"#2dd4bf","WebSearch":"#2dd4bf","AskUserQuestion":"#f43f5e","view_image":"#f472b6","shell_command":"#fb923c","update_plan":"#818cf8","EnterPlanMode":"#a78bfa"};
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
-function fN(n){if(!n)return'0';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toString()}
+function fN(n){if(!n)return'0';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toString()}
 
 // === SHARE BUTTONS ===
 (function(){
