@@ -31,7 +31,7 @@ export default function ClubLayout({
   return (
     <>
       <Titlebar />
-      {children}
+      <div className="pt-12">{children}</div>
     </>
   );
 }
