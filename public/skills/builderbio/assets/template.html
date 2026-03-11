@@ -405,6 +405,14 @@ function safeRun(name,fn){try{fn()}catch(e){console.warn('BuilderBio: section "'
 // Convert agent_badges array to agents_used object if needed
 (function(){
   const p=D.profile||{};
+  if(!p.avatar_url&&p.avatar)p.avatar_url=p.avatar;
+  if(!p.agents_used&&p.agents&&typeof p.agents==='object'){
+    p.agents_used={};
+    Object.entries(p.agents).forEach(function([agent,stats]){
+      stats=stats||{};
+      p.agents_used[agent]={sessions:stats.sessions||0,first_session:stats.first_session||''};
+    });
+  }
   if(!p.agents_used&&p.agent_badges){
     p.agents_used={};
     p.agent_badges.forEach(function(b){
@@ -412,7 +420,14 @@ function safeRun(name,fn){try{fn()}catch(e){console.warn('BuilderBio: section "'
     });
   }
   if(!p.agents_used)p.agents_used={};
+  if(p.social_links&&!Array.isArray(p.social_links)&&typeof p.social_links==='object'){
+    p.social_links=Object.entries(p.social_links).filter(([,url])=>typeof url==='string'&&url).map(([platform,url])=>({platform,url}));
+  }
+  if(!Array.isArray(p.social_links))p.social_links=[];
   // Ensure tech_stack.areas → E.tech object
+  if((!E.tech||typeof E.tech!=='object'||Object.keys(E.tech).length===0)&&Array.isArray(D.tech_stack)){
+    E.tech={};D.tech_stack.forEach(function(a){if(a&&a.name!=null)E.tech[a.name]=a.score||0;});
+  }
   if((!E.tech||typeof E.tech!=='object'||Object.keys(E.tech).length===0)&&D.tech_stack&&D.tech_stack.areas){
     E.tech={};D.tech_stack.areas.forEach(function(a){E.tech[a.name]=a.score;});
   }
@@ -428,19 +443,86 @@ function safeRun(name,fn){try{fn()}catch(e){console.warn('BuilderBio: section "'
   if(!D.evolution&&D.collaboration_curve){
     D.evolution=D.collaboration_curve;
   }
+  if((!E.evolution||!Array.isArray(E.evolution)||E.evolution.length===0)&&Array.isArray(D.evolution)){
+    E.evolution=D.evolution.map(function(e){
+      return{week:e.week||'',sessions:e.sessions||0,turns:e.turns||0,avg_turns:e.avg_turns||e.avg||0};
+    });
+  }
+  if((!E.keywords||!Array.isArray(E.keywords)||E.keywords.length===0)&&Array.isArray(D.keywords)){
+    E.keywords=D.keywords.map(function(k){
+      if(Array.isArray(k))return k;
+      return[k.word||'',k.count||0];
+    }).filter(function(k){return k[0]});
+  }
+  if((!E.time||typeof E.time!=='object'||Object.keys(E.time).length===0)&&D.time){
+    const hd={};
+    if(Array.isArray(D.time.hour_distribution)){
+      for(let i=0;i<24;i++)hd[String(i)]=D.time.hour_distribution[i]||0;
+    }else{
+      for(let i=0;i<24;i++)hd[String(i)]=(D.time.hour_distribution&&D.time.hour_distribution[String(i)])||0;
+    }
+    E.time={
+      hour_distribution:hd,
+      period_data:D.time.period_data||D.time.periods||{},
+      builder_type:D.time.builder_type||'',
+      peak_hour:D.time.peak_hour||0,
+      peak_text:(E.time_detail&&E.time_detail.peak_text)||D.time.peak_text||'',
+      peak_detail:(E.time_detail&&E.time_detail.peak_detail)||D.time.peak_detail||''
+    };
+  }
+  if((!E.comparison||typeof E.comparison!=='object'||Object.keys(E.comparison).length===0)&&E.agent_comparison){
+    E.comparison={};
+    Object.entries(E.agent_comparison).forEach(function([agent,stats]){
+      stats=stats||{};
+      E.comparison[agent]={
+        sessions:stats.sessions||0,
+        total_turns:stats.total_turns||stats.turns||0,
+        avg_turns:stats.avg_turns||0,
+        total_tool_calls:stats.total_tool_calls||stats.tool_calls||0,
+        top_tools:(stats.top_tools||[]).map(function(t){
+          if(Array.isArray(t))return t;
+          return[t.name||'',t.count||0];
+        }).filter(function(t){return t[0]}),
+        distribution:stats.distribution||stats.length_dist||{short:0,medium:0,long:0}
+      };
+    });
+  }
   // Ensure D.time_distribution exists
   if(!D.time_distribution)D.time_distribution={};
   // Ensure D.keywords from top-level
   if(!D.keywords)D.keywords=[];
   // Ensure D.highlights exists
   if(!D.highlights)D.highlights={};
+  if(!D.highlights.favorite_prompt&&E.featured_prompt&&E.featured_prompt.content){
+    D.highlights.favorite_prompt=E.featured_prompt.content;
+  }
+  if(D.highlights.biggest_session&&!D.highlights.biggest_session.display&&D.highlights.biggest_session.project){
+    D.highlights.biggest_session.display=D.highlights.biggest_session.project;
+  }
   // Ensure project tags fallback to tech_tags
   if(D.projects){
     D.projects.forEach(function(p){
+      if(!p.tags&&p.tech_stack)p.tags=p.tech_stack;
       if(!p.tags&&p.tech_tags)p.tags=p.tech_tags;
+      if(typeof p.total_sessions!=='number'){
+        if(Array.isArray(p.sessions))p.total_sessions=p.sessions.length;
+        else if(typeof p.sessions==='number')p.total_sessions=p.sessions;
+        else p.total_sessions=0;
+      }
+      if(typeof p.total_turns!=='number'&&typeof p.turns==='number')p.total_turns=p.turns;
+      if(typeof p.total_tool_calls!=='number'&&typeof p.tool_calls==='number')p.total_tool_calls=p.tool_calls;
+      if(p.status==='in-progress')p.status='in progress';
       if(!p.sessions)p.sessions=[];
     });
   }
+  if(!D.style.style_label&&(D.style.prompt_type||D.style.session_rhythm)){
+    D.style.style_label=[D.style.prompt_type,D.style.session_rhythm].filter(Boolean).join(' × ');
+  }
+  if(!D.style.prompt_type_label&&D.style.prompt_type)D.style.prompt_type_label=D.style.prompt_type;
+  if(!D.style.rhythm_label&&D.style.session_rhythm)D.style.rhythm_label=D.style.session_rhythm;
+  if(!D.style.tool_pref_label&&D.style.tool_preference)D.style.tool_pref_label=D.style.tool_preference;
+  if(!D.style.loyalty_label&&D.style.agent_loyalty)D.style.loyalty_label=D.style.agent_loyalty;
+  if(!D.style.style_sub&&(D.style.rhythm_desc||D.style.tool_pref_desc))D.style.style_sub=D.style.rhythm_desc||D.style.tool_pref_desc;
 })();
 
 // === SHARE BUTTONS ===
@@ -637,7 +719,8 @@ safeRun('projects',function(){
   const sn={'shipped':t('shipped'),'in progress':t('in_progress'),'explored':t('explored')};
   document.getElementById('projects').innerHTML=(D.projects||[]).map(p=>{
     const tags=(p.tags||[]).map(t=>`<span class="ptag">${esc(t)}</span>`).join('');
-    return`<div class="pcard"><div class="pcard-top"><div class="pname">${esc(p.name)}</div><span class="pstatus ${sl[p.status]||'ps-explored'}">${sn[p.status]||p.status}</span></div><div class="pdesc">${esc(p.description)}</div><div class="ptags">${tags}</div><div class="pmeta"><span><strong>${p.sessions?.length||0}</strong> ${t('p_sessions')}</span><span><strong>${fN(p.total_turns)}</strong> ${t('p_turns')}</span><span><strong>${fN(p.total_tool_calls)}</strong> ${t('p_tools')}</span></div></div>`;
+    const sessionCount=typeof p.total_sessions==='number'?p.total_sessions:(Array.isArray(p.sessions)?p.sessions.length:0);
+    return`<div class="pcard"><div class="pcard-top"><div class="pname">${esc(p.name)}</div><span class="pstatus ${sl[p.status]||'ps-explored'}">${sn[p.status]||p.status}</span></div><div class="pdesc">${esc(p.description)}</div><div class="ptags">${tags}</div><div class="pmeta"><span><strong>${sessionCount}</strong> ${t('p_sessions')}</span><span><strong>${fN(p.total_turns)}</strong> ${t('p_turns')}</span><span><strong>${fN(p.total_tool_calls)}</strong> ${t('p_tools')}</span></div></div>`;
   }).join('');
 });
 

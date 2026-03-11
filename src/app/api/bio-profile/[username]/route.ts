@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { profiles, users } from "@/lib/db/schema";
+import { normalizeBuilderBioData } from "@/lib/builderbio";
 import { eq, and } from "drizzle-orm";
 import { sha256 } from "@/lib/auth";
 import { readFile } from "fs/promises";
@@ -113,17 +114,19 @@ export async function GET(
     }
 
     const result = results[0];
-    const bioData = result.builderBioData as {
+    const rawBioData = result.builderBioData as {
       D: Record<string, unknown>;
       E: Record<string, unknown>;
     } | null;
 
-    if (!bioData || !bioData.D || !bioData.E) {
+    if (!rawBioData || !rawBioData.D || !rawBioData.E) {
       return NextResponse.json(
         { error: "BuilderBio data not available" },
         { status: 404 }
       );
     }
+
+    const bioData = normalizeBuilderBioData(rawBioData);
 
     // Verify Unfiltered status
     let isUnfiltered = false;

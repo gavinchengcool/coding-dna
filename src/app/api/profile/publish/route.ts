@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users, profiles } from "@/lib/db/schema";
+import { normalizeBuilderBioData } from "@/lib/builderbio";
 import { eq } from "drizzle-orm";
 import { sha256 } from "@/lib/auth";
 import { rateLimitByIp } from "@/lib/rate-limit";
@@ -169,10 +170,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const normalizedBuilderBio = normalizeBuilderBioData(builderbio);
+
     // Sync profile metadata from builderbio.D if available
     // D.profile is the authoritative source for stats
-    if (builderbio?.D) {
-      const dProfile = (builderbio.D as Record<string, unknown>).profile as Record<string, unknown> | undefined;
+    if (normalizedBuilderBio.D) {
+      const dProfile = (normalizedBuilderBio.D as Record<string, unknown>).profile as Record<string, unknown> | undefined;
       if (dProfile) {
         if (typeof dProfile.total_sessions === "number" && dProfile.total_sessions > 0) {
           profile.sessions_analyzed = dProfile.total_sessions;
@@ -231,7 +234,7 @@ export async function POST(req: NextRequest) {
           behavioralFingerprint: profile.behavioral_fingerprint,
           searchProfile: profile.search_profile,
           searchVector,
-          builderBioData: builderbio,
+          builderBioData: normalizedBuilderBio,
           dataHash: data_hash || null,
           styleTheme: style_theme,
           sessionsAnalyzed: profile.sessions_analyzed,
@@ -318,7 +321,7 @@ export async function POST(req: NextRequest) {
       behavioralFingerprint: profile.behavioral_fingerprint,
       searchProfile: profile.search_profile,
       searchVector,
-      builderBioData: builderbio,
+      builderBioData: normalizedBuilderBio,
       dataHash: data_hash || null,
       styleTheme: style_theme,
       sessionsAnalyzed: profile.sessions_analyzed,
