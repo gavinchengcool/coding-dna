@@ -1,6 +1,6 @@
 ---
 name: builderbio
-version: 0.5.1
+version: 0.5.2
 description: |
   This skill should be used when the user wants to generate a shareable "BuilderBio" — a profile page showcasing everything they built with AI coding agents (Claude Code, Codex, Trae, Antigravity, Kiro, Windsurf, OpenClaw, and more). It scans all local agent sessions, aggregates stats, clusters projects, and produces a personal portfolio. This skill should be used when the user mentions "BuilderBio", "builder bio", "builder profile", "share my builds", "coding history", "AI portfolio", "showcase", "分享", "画像", "展示", "导出", or "profile".
 allowed-tools:
