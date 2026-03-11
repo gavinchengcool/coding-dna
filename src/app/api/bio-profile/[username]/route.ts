@@ -236,17 +236,15 @@ export async function GET(
     const pageDesc = `${totalSessions} sessions, ${totalTurns.toLocaleString()} turns, ${activeDays} active days of building with ${agents}. See what ${displayName} shipped with AI coding agents.`;
     const profileUrl = `https://${username}.builderbio.dev`;
 
-    const summary = (profileD.profile?.summary as string) || "";
-    const agentsList = profileD.profile?.agents_used
-      ? Object.keys(
-          profileD.profile.agents_used as Record<string, unknown>
-        ).join(",")
-      : "AI Agents";
-    const ogImageUrl = `https://builderbio.dev/api/og?name=${encodeURIComponent(displayName)}&sessions=${totalSessions}&turns=${totalTurns}&days=${activeDays}&agents=${encodeURIComponent(agentsList)}&summary=${encodeURIComponent(summary)}`;
+    const ogImageUrl = "https://builderbio.dev/og-image.png";
 
     const seoMeta = `<title>${pageTitle}</title>
 <meta name="description" content="${pageDesc}">
 <link rel="canonical" href="${profileUrl}">
+<link rel="icon" href="https://builderbio.dev/favicon.ico" sizes="32x32">
+<link rel="icon" href="https://builderbio.dev/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="https://builderbio.dev/apple-icon.png">
+<link rel="manifest" href="https://builderbio.dev/manifest.json">
 <meta property="og:title" content="${pageTitle}">
 <meta property="og:description" content="${pageDesc}">
 <meta property="og:url" content="${profileUrl}">
