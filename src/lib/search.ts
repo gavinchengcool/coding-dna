@@ -1,11 +1,16 @@
 import { db } from "./db";
 import { profiles, users } from "./db/schema";
+import {
+  extractBuilderBioAvatarUrl,
+  extractPortraitAvatarUrl,
+} from "./builderbio";
 import { eq, and, sql, ilike, or, isNotNull, gt } from "drizzle-orm";
 
 export interface SearchResult {
   username: string;
   displayName: string | null;
   avatarColor: string | null;
+  avatarUrl: string | null;
   summary: string | null;
   portrait: unknown;
   frameworkSentences: unknown;
@@ -13,6 +18,27 @@ export interface SearchResult {
   sessionsAnalyzed: number | null;
   totalTokens: number | null;
   rank?: number;
+}
+
+type SearchRow = Omit<SearchResult, "avatarUrl"> & {
+  builderBioData: unknown;
+};
+
+function mapSearchResult(row: SearchRow): SearchResult {
+  return {
+    username: row.username,
+    displayName: row.displayName,
+    avatarColor: row.avatarColor,
+    avatarUrl:
+      extractBuilderBioAvatarUrl(row.builderBioData) ??
+      extractPortraitAvatarUrl(row.portrait),
+    summary: row.summary,
+    portrait: row.portrait,
+    frameworkSentences: row.frameworkSentences,
+    searchProfile: row.searchProfile,
+    sessionsAnalyzed: row.sessionsAnalyzed,
+    totalTokens: row.totalTokens,
+  };
 }
 
 export async function searchPeople(query: string): Promise<SearchResult[]> {
@@ -27,6 +53,7 @@ export async function searchPeople(query: string): Promise<SearchResult[]> {
         portrait: profiles.portrait,
         frameworkSentences: profiles.frameworkSentences,
         searchProfile: profiles.searchProfile,
+        builderBioData: profiles.builderBioData,
         sessionsAnalyzed: profiles.sessionsAnalyzed,
         totalTokens: profiles.totalTokens,
       })
@@ -41,7 +68,7 @@ export async function searchPeople(query: string): Promise<SearchResult[]> {
       )
       .limit(50);
 
-    return results;
+    return results.map(mapSearchResult);
   }
 
   const searchTerm = `%${query}%`;
@@ -55,6 +82,7 @@ export async function searchPeople(query: string): Promise<SearchResult[]> {
       portrait: profiles.portrait,
       frameworkSentences: profiles.frameworkSentences,
       searchProfile: profiles.searchProfile,
+      builderBioData: profiles.builderBioData,
       sessionsAnalyzed: profiles.sessionsAnalyzed,
       totalTokens: profiles.totalTokens,
     })
@@ -75,7 +103,7 @@ export async function searchPeople(query: string): Promise<SearchResult[]> {
     )
     .limit(50);
 
-  return results;
+  return results.map(mapSearchResult);
 }
 
 export async function searchSkills(query: string): Promise<SearchResult[]> {
@@ -92,6 +120,7 @@ export async function searchSkills(query: string): Promise<SearchResult[]> {
       portrait: profiles.portrait,
       frameworkSentences: profiles.frameworkSentences,
       searchProfile: profiles.searchProfile,
+      builderBioData: profiles.builderBioData,
       sessionsAnalyzed: profiles.sessionsAnalyzed,
       totalTokens: profiles.totalTokens,
     })
@@ -111,5 +140,5 @@ export async function searchSkills(query: string): Promise<SearchResult[]> {
     )
     .limit(50);
 
-  return results;
+  return results.map(mapSearchResult);
 }

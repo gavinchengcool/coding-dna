@@ -14,6 +14,7 @@ interface ProfileCard {
   username: string;
   displayName: string | null;
   avatarColor: string | null;
+  avatarUrl: string | null;
   summary: string | null;
   portrait: Record<string, unknown> | null;
   frameworkSentences: string[] | null;
@@ -108,12 +109,21 @@ export default function TasteBoardPage() {
                   {/* Avatar + name */}
                   <div className="flex items-center gap-3">
                     <img
-                      src={`/avatar-${profile.username}.jpg`}
+                      src={profile.avatarUrl || `/avatar-${profile.username}.jpg`}
                       alt={profile.displayName || profile.username}
                       className="w-10 h-10 rounded-full object-cover"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
                       onError={(e) => {
-                        // Fallback to colored initial
                         const target = e.currentTarget;
+                        if (
+                          profile.avatarUrl &&
+                          target.src !== `${window.location.origin}/avatar-${profile.username}.jpg`
+                        ) {
+                          target.src = `/avatar-${profile.username}.jpg`;
+                          return;
+                        }
+
                         target.style.display = "none";
                         const fallback = target.nextElementSibling as HTMLElement;
                         if (fallback) fallback.style.display = "flex";

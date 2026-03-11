@@ -27,6 +27,15 @@ function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value : null;
 }
 
+function firstString(record: JsonObject | null, keys: string[]): string | null {
+  if (!record) return null;
+  for (const key of keys) {
+    const value = asString(record[key]);
+    if (value) return value;
+  }
+  return null;
+}
+
 function hasKeys(value: unknown): value is JsonObject {
   return !!asObject(value) && Object.keys(value as JsonObject).length > 0;
 }
@@ -372,4 +381,26 @@ export function normalizeBuilderBioData(data: BuilderBioData): BuilderBioData {
   }
 
   return normalized;
+}
+
+export function extractBuilderBioAvatarUrl(data: unknown): string | null {
+  const bioData = asObject(data) as BuilderBioData | null;
+  if (!bioData?.D) return null;
+
+  const normalized = normalizeBuilderBioData(bioData);
+  const profile = asObject(normalized.D.profile);
+  return firstString(profile, ["avatar_url", "avatar"]);
+}
+
+export function extractPortraitAvatarUrl(portrait: unknown): string | null {
+  const portraitObject = asObject(portrait);
+  return firstString(portraitObject, [
+    "avatar_url",
+    "avatar",
+    "image_url",
+    "image",
+    "photo_url",
+    "photo",
+    "url",
+  ]);
 }
