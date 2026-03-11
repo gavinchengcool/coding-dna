@@ -14,7 +14,6 @@ export default function Titlebar() {
           href="https://builderbio.dev"
           className="flex items-center gap-2 text-text-secondary font-bold text-sm tracking-wide hover:text-accent transition-colors"
         >
-          <svg width="20" height="14" viewBox="0 0 560 400" fill="currentColor" className="shrink-0"><text x="80" y="300" fontFamily="ui-monospace,monospace" fontSize="260" fontWeight="700">{'{' }</text><text x="280" y="300" fontFamily="system-ui,sans-serif" fontSize="260" fontWeight="800">B</text><text x="480" y="300" fontFamily="ui-monospace,monospace" fontSize="260" fontWeight="700">{'}'}</text></svg>
           <span className="text-text-muted">~/</span>builderbio
         </a>
         <nav className="flex items-center gap-4 text-xs text-text-secondary">
