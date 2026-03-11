@@ -157,22 +157,182 @@ def load_claude_history(claude_dir):
     return history
 
 
+def infer_claude_session_id(filepath):
+    """Infer the Claude session ID from the file path when an entry omits it."""
+    path = Path(filepath)
+    if path.stem and not path.stem.startswith("agent-"):
+        return path.stem
+    if path.parent.name == "subagents":
+        parent = path.parent.parent.name
+        if parent:
+            return parent
+    return ""
+
+
+def extract_text_content(content):
+    """Extract plain text from Claude/Trae content blocks."""
+    if isinstance(content, str):
+        return content[:200]
+    if isinstance(content, list):
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                return str(block.get("text", ""))[:200]
+    return ""
+
+
+def sum_claude_usage(usage):
+    """Count Claude usage fields including cache and reasoning buckets."""
+    if not isinstance(usage, dict):
+        return 0
+
+    total = 0
+    for key in [
+        "input_tokens",
+        "cache_read_input_tokens",
+        "cache_creation_input_tokens",
+        "cached_input_tokens",
+        "output_tokens",
+        "reasoning_output_tokens",
+    ]:
+        value = usage.get(key, 0)
+        if isinstance(value, (int, float)):
+            total += int(value)
+    return total
+
+
+def new_claude_session_accumulator(session_id, history):
+    """Initialize a logical Claude session aggregator."""
+    return {
+        "id": session_id,
+        "history_display": history.get(session_id, ""),
+        "user_turns": 0,
+        "assistant_turns": 0,
+        "tool_counter": Counter(),
+        "tokens": 0,
+        "model": "",
+        "version": "",
+        "cwd": "",
+        "git_branch": "",
+        "start_ts": None,
+        "end_ts": None,
+        "first_user_msg": "",
+    }
+
+
+def update_claude_session_accumulator(acc, entry):
+    """Merge one Claude JSONL entry into a logical session summary."""
+    ts = parse_ts(entry.get("timestamp"))
+    if ts:
+        if acc["start_ts"] is None or ts < acc["start_ts"]:
+            acc["start_ts"] = ts
+        if acc["end_ts"] is None or ts > acc["end_ts"]:
+            acc["end_ts"] = ts
+
+    etype = entry.get("type", "")
+    if etype == "user" and entry.get("userType") == "external":
+        acc["user_turns"] += 1
+        if not acc["cwd"]:
+            acc["cwd"] = entry.get("cwd", "")
+        if not acc["version"]:
+            acc["version"] = entry.get("version", "")
+        if not acc["git_branch"]:
+            acc["git_branch"] = entry.get("gitBranch", "")
+        if not acc["first_user_msg"]:
+            acc["first_user_msg"] = extract_text_content(
+                entry.get("message", {}).get("content", "")
+            )
+        return
+
+    if etype != "assistant":
+        return
+
+    acc["assistant_turns"] += 1
+    message = entry.get("message", {})
+    if not acc["model"] and message.get("model"):
+        acc["model"] = message["model"]
+    acc["tokens"] += sum_claude_usage(message.get("usage", {}))
+    for block in message.get("content") or []:
+        if isinstance(block, dict) and block.get("type") == "tool_use":
+            acc["tool_counter"][block.get("name", "unknown")] += 1
+
+
+def finalize_claude_session(acc):
+    """Convert a Claude session accumulator into the output session schema."""
+    if acc["user_turns"] == 0 and acc["assistant_turns"] == 0:
+        return None
+
+    display = acc["history_display"] or acc["first_user_msg"][:100]
+    for prefix in [
+        "[Request interrupted",
+        "<task-notification",
+        "<local-command",
+        "This session is being continued",
+    ]:
+        if display.startswith(prefix):
+            display = acc["first_user_msg"][:100]
+            break
+
+    duration = 0
+    date_str = ""
+    if acc["start_ts"] and acc["end_ts"]:
+        duration = int((acc["end_ts"] - acc["start_ts"]).total_seconds())
+        date_str = acc["start_ts"].strftime("%Y-%m-%d")
+
+    return {
+        "id": acc["id"],
+        "agent": "claude-code",
+        "model": acc["model"],
+        "version": acc["version"],
+        "date": date_str,
+        "display": display,
+        "first_msg": acc["first_user_msg"][:200],
+        "turns": acc["user_turns"] + acc["assistant_turns"],
+        "user_turns": acc["user_turns"],
+        "assistant_turns": acc["assistant_turns"],
+        "tool_calls": sum(acc["tool_counter"].values()),
+        "tools": dict(acc["tool_counter"]),
+        "tokens": acc["tokens"],
+        "duration_seconds": duration,
+        "cwd": acc["cwd"],
+        "git_branch": acc["git_branch"],
+        "_start_hour": acc["start_ts"].hour if acc["start_ts"] else None,
+    }
+
+
 def parse_claude_code_sessions(claude_dir, cutoff, history):
-    """Parse all Claude Code project session files."""
+    """Parse all Claude Code logs, including sidechains, into logical sessions."""
     sessions = []
-    project_dirs = glob.glob(os.path.join(claude_dir, "projects", "*"))
+    accumulators = {}
+    pattern = os.path.join(claude_dir, "projects", "**", "*.jsonl")
 
-    for pdir in project_dirs:
-        jsonl_files = glob.glob(os.path.join(pdir, "*.jsonl"))
-        for fp in jsonl_files:
-            mtime = datetime.fromtimestamp(os.path.getmtime(fp), tz=timezone.utc)
-            if mtime < cutoff:
-                continue
+    for fp in glob.glob(pattern, recursive=True):
+        fallback_sid = infer_claude_session_id(fp)
+        try:
+            with open(fp, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        entry = json.loads(line.strip())
+                    except json.JSONDecodeError:
+                        continue
 
-            sid = Path(fp).stem
-            summary = parse_claude_code_session(fp, sid, history)
-            if summary and summary["turns"] > 0:
-                sessions.append(summary)
+                    session_id = entry.get("sessionId") or fallback_sid
+                    if not session_id:
+                        continue
+
+                    acc = accumulators.get(session_id)
+                    if acc is None:
+                        acc = new_claude_session_accumulator(session_id, history)
+                        accumulators[session_id] = acc
+                    update_claude_session_accumulator(acc, entry)
+        except (OSError, IOError):
+            continue
+
+    for acc in accumulators.values():
+        if acc["end_ts"] and acc["end_ts"] < cutoff:
+            continue
+        summary = finalize_claude_session(acc)
+        if summary and summary["turns"] > 0:
+            sessions.append(summary)
 
     return sessions
 
@@ -279,6 +439,32 @@ def parse_claude_code_session(filepath, session_id, history):
     }
 
 
+def extract_codex_token_total(snapshot):
+    """Return a comparable total token count from one Codex usage snapshot."""
+    if not isinstance(snapshot, dict):
+        return None
+
+    explicit_total = snapshot.get("total_tokens")
+    if isinstance(explicit_total, (int, float)):
+        return int(explicit_total)
+
+    total = 0
+    found = False
+    for key in [
+        "input_tokens",
+        "cached_input_tokens",
+        "cached_tokens",
+        "output_tokens",
+        "reasoning_output_tokens",
+        "reasoning_tokens",
+    ]:
+        value = snapshot.get(key)
+        if isinstance(value, (int, float)):
+            total += int(value)
+            found = True
+    return total if found else None
+
+
 def parse_codex_sessions(codex_dir, cutoff):
     """Parse all Codex session files."""
     sessions = []
@@ -303,8 +489,9 @@ def parse_codex_session(filepath):
     user_turns = 0
     assistant_turns = 0
     tool_counter = Counter()
-    total_in = 0
-    total_out = 0
+    token_total_max = None
+    last_token_total_max = None
+    fallback_token_total = 0
     start_ts = None
     end_ts = None
     first_user_msg = ""
@@ -345,10 +532,25 @@ def parse_codex_session(filepath):
                         model = payload.get("model", "")
 
                 elif etype == "event_msg":
-                    if payload.get("type") == "user_message":
+                    payload_type = payload.get("type")
+                    if payload_type == "user_message":
                         user_turns += 1
                         if not first_user_msg:
                             first_user_msg = payload.get("message", "")[:200]
+                    elif payload_type == "token_count":
+                        info = payload.get("info") or payload.get("token_count_info") or {}
+                        total_snapshot = extract_codex_token_total(
+                            info.get("total_token_usage")
+                        )
+                        last_snapshot = extract_codex_token_total(
+                            info.get("last_token_usage")
+                        )
+                        if total_snapshot is not None:
+                            token_total_max = max(token_total_max or 0, total_snapshot)
+                        if last_snapshot is not None:
+                            last_token_total_max = max(
+                                last_token_total_max or 0, last_snapshot
+                            )
 
                 elif etype == "response_item":
                     ptype = payload.get("type", "")
@@ -359,8 +561,9 @@ def parse_codex_session(filepath):
                         tool_counter[codex_tool_map.get(name, name)] += 1
 
                 elif etype == "token_usage":
-                    total_in += payload.get("input_tokens", 0)
-                    total_out += payload.get("output_tokens", 0)
+                    snapshot_total = extract_codex_token_total(payload)
+                    if snapshot_total is not None:
+                        fallback_token_total += snapshot_total
 
     except (OSError, IOError):
         return None
@@ -373,6 +576,14 @@ def parse_codex_session(filepath):
     if start_ts and end_ts:
         duration = int((end_ts - start_ts).total_seconds())
         date_str = start_ts.strftime("%Y-%m-%d")
+
+    total_tokens = (
+        token_total_max
+        if token_total_max is not None
+        else last_token_total_max
+        if last_token_total_max is not None
+        else fallback_token_total
+    )
 
     return {
         "id": session_id or Path(filepath).stem,
@@ -387,7 +598,7 @@ def parse_codex_session(filepath):
         "assistant_turns": assistant_turns,
         "tool_calls": sum(tool_counter.values()),
         "tools": dict(tool_counter),
-        "tokens": total_in + total_out,
+        "tokens": total_tokens,
         "duration_seconds": duration,
         "cwd": cwd,
         "git_branch": git_branch,
@@ -433,8 +644,10 @@ def _parse_trae_db(db_path, cutoff, seen_ids):
             """
             SELECT key, value
             FROM ItemTable
-            WHERE key LIKE '%icube-ai-chat-storage-%'
-               OR key LIKE '%icube-ai-ng-chat-storage-%'
+            WHERE key LIKE '%icube-ai-chat-storage%'
+               OR key LIKE '%icube-ai-ng-chat-storage%'
+               OR key LIKE '%icube-ai-agent-storage%'
+               OR key LIKE '%icube-ai-ng-agent-storage%'
             """
         )
         for row in cur.fetchall():
@@ -454,7 +667,7 @@ def _parse_trae_db(db_path, cutoff, seen_ids):
                 if not sid or sid in seen_ids:
                     continue
 
-                messages = chat.get("messages", [])
+                messages = chat.get("messages") or chat.get("messageList") or []
                 if not isinstance(messages, list) or not messages:
                     continue
 
@@ -484,13 +697,7 @@ def _parse_trae_db(db_path, cutoff, seen_ids):
                         user_turns += 1
                         if not first_user_msg:
                             content = msg.get("content", "")
-                            if isinstance(content, str):
-                                first_user_msg = content[:200]
-                            elif isinstance(content, list):
-                                for b in content:
-                                    if isinstance(b, dict) and b.get("type") == "text":
-                                        first_user_msg = b.get("text", "")[:200]
-                                        break
+                            first_user_msg = extract_text_content(content)
                     elif role in ("assistant", "ai"):
                         assistant_turns += 1
 

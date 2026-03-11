@@ -136,7 +136,7 @@ Agent responses including text and function calls.
 
 ### token_usage
 
-Token consumption per turn.
+Legacy token consumption per turn.
 
 ```json
 {
@@ -150,6 +150,37 @@ Token consumption per turn.
 }
 ```
 
+### token_count snapshot
+
+Newer Codex logs also emit cumulative snapshots via `event_msg`:
+
+```json
+{
+  "type": "event_msg",
+  "payload": {
+    "type": "token_count",
+    "info": {
+      "total_token_usage": {
+        "input_tokens": 11015,
+        "cached_input_tokens": 5120,
+        "output_tokens": 1746,
+        "reasoning_output_tokens": 1088,
+        "total_tokens": 12761
+      },
+      "last_token_usage": {
+        "input_tokens": 5756,
+        "cached_input_tokens": 5120,
+        "output_tokens": 209,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 5965
+      }
+    }
+  }
+}
+```
+
+When summarizing a session, prefer the max `total_token_usage` snapshot within the file. If it is absent, fall back to `last_token_usage`, then to legacy `token_usage` events.
+
 ## Key Fields for Analysis
 
 | Field | Location | Use |
@@ -157,7 +188,7 @@ Token consumption per turn.
 | User intent | First `event_msg` with `payload.type: "user_message"` | Task Outcome |
 | Function calls | `response_item` with `payload.type: "function_call"` | Tool distribution |
 | Model | `turn_context.payload.model` | Meta info |
-| Token usage | `token_usage.payload` | Efficiency metrics |
+| Token usage | `event_msg.payload.info.total_token_usage`, fallback `last_token_usage`, then `token_usage.payload` | Efficiency metrics |
 | Reasoning effort | `turn_context.payload.collaboration_mode.settings.reasoning_effort` | Capability |
 | Git info | `session_meta.payload.git` | Context |
 | Timestamps | Envelope `timestamp` on every entry | Duration, timeline |

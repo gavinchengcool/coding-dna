@@ -14,15 +14,15 @@ Auto-detect:
 Scan for sessions:
 
 ```bash
-# Claude Code — list all session files, sorted by date
-ls -lt ~/.claude/projects/*/*.jsonl 2>/dev/null | head -100
+# Claude Code — recursively list root sessions and sidechains
+find ~/.claude/projects -name '*.jsonl' 2>/dev/null | head -200
 
 # Codex — list all session files
 ls -lt ~/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -100
 
 # Trae
-ls -la ~/Library/Application\ Support/Trae/User/globalStorage/state.vscdb 2>/dev/null
-ls -la ~/Library/Application\ Support/Trae\ CN/User/globalStorage/state.vscdb 2>/dev/null
+find ~/Library/Application\ Support/Trae/User -name state.vscdb 2>/dev/null | head -50
+find ~/Library/Application\ Support/Trae\ CN/User -name state.vscdb 2>/dev/null | head -50
 
 # Antigravity
 ls -la ~/.antigravity_tools/proxy_logs.db 2>/dev/null
@@ -56,7 +56,7 @@ python <skill-path>/scripts/parse_sessions.py \
   --output /tmp/builder_profile_data.json
 ```
 
-Use `--days 0` to include ALL sessions with no time limit. Only include flags for agents with detected data. The script skips missing directories gracefully.
+Use `--days 0` to include ALL sessions with no time limit. The parser treats `--days <= 0` as full-history scan, merges Claude sidechains by `sessionId`, prefers Codex `total_token_usage` max snapshots, and scans Trae `workspaceStorage` `state.vscdb` files in addition to global storage. Only include flags for agents with detected data. The script skips missing directories gracefully.
 
 If the script fails, fall back to manual parsing: read each JSONL file and extract the fields documented in the format references.
 

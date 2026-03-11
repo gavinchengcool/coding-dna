@@ -1,6 +1,6 @@
 ---
 name: builderbio
-version: 0.5.0
+version: 0.5.1
 description: |
   This skill should be used when the user wants to generate a shareable "BuilderBio" — a profile page showcasing everything they built with AI coding agents (Claude Code, Codex, Trae, Antigravity, Kiro, Windsurf, OpenClaw, and more). It scans all local agent sessions, aggregates stats, clusters projects, and produces a personal portfolio. This skill should be used when the user mentions "BuilderBio", "builder bio", "builder profile", "share my builds", "coding history", "AI portfolio", "showcase", "分享", "画像", "展示", "导出", or "profile".
 allowed-tools:
@@ -40,11 +40,11 @@ The only user input is **choosing a visual style theme** (Phase 3.5). Everything
 
 | Agent | Log Location | Format |
 |-------|-------------|--------|
-| Claude Code | `~/.claude/projects/<project>/<session>.jsonl` | JSONL |
+| Claude Code | `~/.claude/projects/**/*.jsonl` | JSONL |
 | Claude Code history | `~/.claude/history.jsonl` | JSONL (summaries) |
 | Codex (OpenAI) | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` | JSONL |
-| Trae (ByteDance) | `~/Library/Application Support/Trae/User/globalStorage/state.vscdb` | SQLite |
-| Trae CN | `~/Library/Application Support/Trae CN/User/globalStorage/state.vscdb` | SQLite |
+| Trae (ByteDance) | `~/Library/Application Support/Trae/User/**/state.vscdb` | SQLite |
+| Trae CN | `~/Library/Application Support/Trae CN/User/**/state.vscdb` | SQLite |
 | Antigravity (Gemini) | `~/.antigravity_tools/proxy_logs.db` | SQLite |
 | Kiro (AWS) | `~/.kiro/` | SQLite / JSON |
 | Windsurf (Codeium) | `~/.windsurf/transcripts/*.jsonl` | JSONL |
@@ -55,7 +55,11 @@ For parsing details, see [references/claude-code-format.md](references/claude-co
 
 **OpenClaw format**: Each `.jsonl` file contains messages with `type` (session/message), `timestamp`, `message.role` (user/assistant/toolResult), and `message.content[]` (filter `type=="text"` for human-readable content). Session metadata is in `sessions.json` in the same directory.
 
-**Trae format**: Sessions stored in SQLite `state.vscdb` files. Query `ItemTable` for keys matching `%icube-ai-chat-storage-%`. JSON blobs contain `{list: [{sessionId, messages, createdAt, ...}]}`. Token counts unavailable.
+**Claude Code format**: Recursively scan `~/.claude/projects/**/*.jsonl`, including `subagents/agent-*.jsonl` and top-level `agent-*.jsonl`. Merge all files sharing the same `sessionId` into one logical session. Count Claude tokens as `input_tokens + cache_read_input_tokens + cache_creation_input_tokens + cached_input_tokens + output_tokens + reasoning_output_tokens` when present.
+
+**Codex format**: Prefer `event_msg.payload.info.total_token_usage` (or `token_count_info.total_token_usage`) and take the max snapshot within a session to avoid duplicate cumulative counts. If missing, fall back to `last_token_usage`, then old `token_usage` events.
+
+**Trae format**: Sessions live in both global storage and `workspaceStorage` `state.vscdb` files. Query `ItemTable` for keys matching `%icube-ai-chat-storage%`, `%icube-ai-ng-chat-storage%`, `%icube-ai-agent-storage%`, and `%icube-ai-ng-agent-storage%`. Token counts remain unstable, so count sessions/turns and leave tokens at `0`.
 
 **Antigravity format**: API requests in `proxy_logs.db` SQLite. Grouped into sessions by 30-min time gaps. Tokens from `input_tokens`/`output_tokens` columns.
 
@@ -79,15 +83,15 @@ Auto-detect:
 Scan for sessions:
 
 ```bash
-# Claude Code — list all session files, sorted by date
-ls -lt ~/.claude/projects/*/*.jsonl 2>/dev/null | head -100
+# Claude Code — recursively list root sessions and sidechains
+find ~/.claude/projects -name '*.jsonl' 2>/dev/null | head -200
 
 # Codex — list all session files
 ls -lt ~/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -100
 
 # Trae
-ls -la ~/Library/Application\ Support/Trae/User/globalStorage/state.vscdb 2>/dev/null
-ls -la ~/Library/Application\ Support/Trae\ CN/User/globalStorage/state.vscdb 2>/dev/null
+find ~/Library/Application\ Support/Trae/User -name state.vscdb 2>/dev/null | head -50
+find ~/Library/Application\ Support/Trae\ CN/User -name state.vscdb 2>/dev/null | head -50
 
 # Antigravity
 ls -la ~/.antigravity_tools/proxy_logs.db 2>/dev/null
@@ -121,7 +125,7 @@ python <skill-path>/scripts/parse_sessions.py \
   --output /tmp/builder_profile_data.json
 ```
 
-Use `--days 0` to include ALL sessions with no time limit. Only include flags for agents with detected data. The script skips missing directories gracefully.
+Use `--days 0` to include ALL sessions with no time limit. The parser treats `--days <= 0` as full-history scan, merges Claude sidechains by `sessionId`, and prefers Codex cumulative token snapshots over duplicate per-turn additions. Only include flags for agents with detected data. The script skips missing directories gracefully.
 
 If the script fails, fall back to manual parsing: read each JSONL file and extract the fields documented in the format references.
 
