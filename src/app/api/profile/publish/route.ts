@@ -158,6 +158,17 @@ export async function POST(req: NextRequest) {
 
     const { device_id, publish_token, data_hash, style_theme, profile, builderbio } = parsed.data;
 
+    if (!builderbio) {
+      return NextResponse.json(
+        {
+          error: "Missing builderbio data",
+          details:
+            "The publish payload must include builderbio: { D: {...}, E: {...} }. Metadata-only publishes cannot render a BuilderBio page.",
+        },
+        { status: 400 }
+      );
+    }
+
     // Sync profile metadata from builderbio.D if available
     // D.profile is the authoritative source for stats
     if (builderbio?.D) {
@@ -220,7 +231,7 @@ export async function POST(req: NextRequest) {
           behavioralFingerprint: profile.behavioral_fingerprint,
           searchProfile: profile.search_profile,
           searchVector,
-          builderBioData: builderbio || undefined,
+          builderBioData: builderbio,
           dataHash: data_hash || null,
           styleTheme: style_theme,
           sessionsAnalyzed: profile.sessions_analyzed,
@@ -262,7 +273,6 @@ export async function POST(req: NextRequest) {
         url: `https://${existingUser.username}.${baseDomain}`,
         slug: existingUser.username,
         ...(tokenToReturn ? { publish_token: tokenToReturn } : {}),
-        ...(!builderbio ? { warning: "Profile metadata saved, but no builderbio data (D/E objects) was included. The profile page requires a 'builderbio' field containing { D: {...}, E: {...} } to render. See SKILL.md Phase 4 for the correct payload format." } : {}),
       });
     }
 
@@ -308,7 +318,7 @@ export async function POST(req: NextRequest) {
       behavioralFingerprint: profile.behavioral_fingerprint,
       searchProfile: profile.search_profile,
       searchVector,
-      builderBioData: builderbio || undefined,
+      builderBioData: builderbio,
       dataHash: data_hash || null,
       styleTheme: style_theme,
       sessionsAnalyzed: profile.sessions_analyzed,
@@ -320,7 +330,6 @@ export async function POST(req: NextRequest) {
       url: `https://${shortCode}.${baseDomain}`,
       slug: shortCode,
       publish_token: publishTokenNew,
-      ...(!builderbio ? { warning: "Profile metadata saved, but no builderbio data (D/E objects) was included. The profile page requires a 'builderbio' field containing { D: {...}, E: {...} } to render. See SKILL.md Phase 4 for the correct payload format." } : {}),
     });
   } catch (error) {
     console.error("Publish error:", error);

@@ -22,6 +22,16 @@ interface ProfileCard {
   totalTokens: number | null;
 }
 
+function getCardSummary(profile: ProfileCard): string | null {
+  const summary = profile.summary?.trim();
+  if (summary) return summary;
+
+  const firstFrameworkSentence = profile.frameworkSentences?.[0]?.trim();
+  if (firstFrameworkSentence) return firstFrameworkSentence;
+
+  return null;
+}
+
 export default function TasteBoardPage() {
   const { t } = useI18n();
   const [results, setResults] = useState<ProfileCard[]>([]);
@@ -77,6 +87,7 @@ export default function TasteBoardPage() {
         <div className="grid md:grid-cols-2 gap-4">
           {results.map((profile) => {
             const tags = getTags(profile);
+            const cardSummary = getCardSummary(profile);
             return (
               <a
                 key={profile.username}
@@ -124,13 +135,12 @@ export default function TasteBoardPage() {
                     </div>
                   </div>
 
-                  {/* Quote */}
-                  {profile.frameworkSentences &&
-                    profile.frameworkSentences.length > 0 && (
-                      <p className="text-xs text-text-secondary italic leading-relaxed line-clamp-2">
-                        &quot;{(profile.frameworkSentences as string[])[0]}&quot;
-                      </p>
-                    )}
+                  {/* Summary */}
+                  {cardSummary && (
+                    <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 min-h-[3.75rem]">
+                      {cardSummary}
+                    </p>
+                  )}
 
                   {/* Stats */}
                   {profile.sessionsAnalyzed && profile.sessionsAnalyzed > 0 && (

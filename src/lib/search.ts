@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { profiles, users } from "./db/schema";
-import { eq, and, sql, ilike, or } from "drizzle-orm";
+import { eq, and, sql, ilike, or, isNotNull, gt } from "drizzle-orm";
 
 export interface SearchResult {
   username: string;
@@ -32,7 +32,13 @@ export async function searchPeople(query: string): Promise<SearchResult[]> {
       })
       .from(profiles)
       .innerJoin(users, eq(profiles.userId, users.id))
-      .where(eq(profiles.isPublic, 1))
+      .where(
+        and(
+          eq(profiles.isPublic, 1),
+          isNotNull(profiles.builderBioData),
+          gt(profiles.sessionsAnalyzed, 0)
+        )
+      )
       .limit(50);
 
     return results;
@@ -57,6 +63,8 @@ export async function searchPeople(query: string): Promise<SearchResult[]> {
     .where(
       and(
         eq(profiles.isPublic, 1),
+        isNotNull(profiles.builderBioData),
+        gt(profiles.sessionsAnalyzed, 0),
         or(
           ilike(users.username, searchTerm),
           ilike(users.displayName, searchTerm),
@@ -92,6 +100,8 @@ export async function searchSkills(query: string): Promise<SearchResult[]> {
     .where(
       and(
         eq(profiles.isPublic, 1),
+        isNotNull(profiles.builderBioData),
+        gt(profiles.sessionsAnalyzed, 0),
         or(
           sql`${profiles.searchVector}::tsvector @@ plainto_tsquery('english', ${query})`,
           sql`${profiles.frameworkSentences}::text ILIKE ${searchTerm}`,
