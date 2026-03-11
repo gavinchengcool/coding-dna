@@ -60,8 +60,8 @@ const publishSchema = z.object({
     activity_map: z.record(z.string(), z.unknown()).optional(),
     behavioral_fingerprint: z.record(z.string(), z.unknown()).optional(),
     search_profile: z.record(z.string(), z.unknown()).optional(),
-    sessions_analyzed: z.number().int().min(0).default(0),
-    total_tokens: z.number().int().min(0).default(0),
+    sessions_analyzed: z.number().min(0).default(0),
+    total_tokens: z.number().min(0).default(0),
   }),
   // Full BuilderBio data model (D + E) for rendering the rich profile page
   builderbio: z
@@ -119,6 +119,34 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+
+    // Normalize common payload variations before validation
+    // Accept "theme" as alias for "style_theme"
+    if (body.theme && !body.style_theme) {
+      body.style_theme = body.theme;
+    }
+    // Accept various builderbio payload formats
+    if (!body.builderbio) {
+      // Case 1: { D: {...}, E: {...} } at top level
+      if (body.D && body.E) {
+        body.builderbio = { D: body.D, E: body.E };
+      }
+      // Case 2: { profile: {...}, extra: {...} } — extra is E, profile contains D-like data
+      else if (body.extra && typeof body.extra === "object") {
+        const D = body.D || body.profile?.D;
+        if (D) {
+          body.builderbio = { D, E: body.extra };
+          if (body.profile?.D) delete body.profile.D;
+        }
+      }
+      // Case 3: { profile: {..., D: {...}, E: {...} } } — D/E nested inside profile
+      else if (body.profile?.D && body.profile?.E) {
+        body.builderbio = { D: body.profile.D, E: body.profile.E };
+        delete body.profile.D;
+        delete body.profile.E;
+      }
+    }
+
     const parsed = publishSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -129,6 +157,27 @@ export async function POST(req: NextRequest) {
     }
 
     const { device_id, publish_token, data_hash, style_theme, profile, builderbio } = parsed.data;
+
+    // Sync profile metadata from builderbio.D if available
+    // D.profile is the authoritative source for stats
+    if (builderbio?.D) {
+      const dProfile = (builderbio.D as Record<string, unknown>).profile as Record<string, unknown> | undefined;
+      if (dProfile) {
+        if (typeof dProfile.total_sessions === "number" && dProfile.total_sessions > 0) {
+          profile.sessions_analyzed = dProfile.total_sessions;
+        }
+        if (typeof dProfile.total_tokens === "number" && dProfile.total_tokens > 0) {
+          profile.total_tokens = dProfile.total_tokens;
+        }
+        if (typeof dProfile.display_name === "string" && dProfile.display_name) {
+          profile.display_name = dProfile.display_name;
+        }
+        if (typeof dProfile.summary === "string" && dProfile.summary) {
+          profile.summary = dProfile.summary;
+        }
+      }
+    }
+
     const searchVector = buildSearchVector(profile);
     const deviceIdHash = await sha256(device_id);
     const baseDomain =
@@ -213,6 +262,7 @@ export async function POST(req: NextRequest) {
         url: `https://${existingUser.username}.${baseDomain}`,
         slug: existingUser.username,
         ...(tokenToReturn ? { publish_token: tokenToReturn } : {}),
+        ...(!builderbio ? { warning: "Profile metadata saved, but no builderbio data (D/E objects) was included. The profile page requires a 'builderbio' field containing { D: {...}, E: {...} } to render. See SKILL.md Phase 4 for the correct payload format." } : {}),
       });
     }
 
@@ -270,6 +320,7 @@ export async function POST(req: NextRequest) {
       url: `https://${shortCode}.${baseDomain}`,
       slug: shortCode,
       publish_token: publishTokenNew,
+      ...(!builderbio ? { warning: "Profile metadata saved, but no builderbio data (D/E objects) was included. The profile page requires a 'builderbio' field containing { D: {...}, E: {...} } to render. See SKILL.md Phase 4 for the correct payload format." } : {}),
     });
   } catch (error) {
     console.error("Publish error:", error);

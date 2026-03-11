@@ -6,6 +6,7 @@ import {
   timestamp,
   jsonb,
   integer,
+  bigint,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -78,7 +79,7 @@ export const profiles = pgTable(
     dataHash: varchar("data_hash", { length: 64 }),
     styleTheme: varchar("style_theme", { length: 20 }).default("default"),
     sessionsAnalyzed: integer("sessions_analyzed").default(0),
-    totalTokens: integer("total_tokens").default(0),
+    totalTokens: bigint("total_tokens", { mode: "number" }).default(0),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
@@ -117,7 +118,7 @@ export const syncHistory = pgTable(
       .references(() => users.id)
       .notNull(),
     sessionsAnalyzed: integer("sessions_analyzed").default(0),
-    totalTokens: integer("total_tokens").default(0),
+    totalTokens: bigint("total_tokens", { mode: "number" }).default(0),
     clientVersion: varchar("client_version", { length: 20 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

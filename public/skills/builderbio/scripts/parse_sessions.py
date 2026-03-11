@@ -99,9 +99,25 @@ def load_claude_history(claude_dir):
     return history
 
 
+def load_stats_cache(claude_dir):
+    """Load token stats from stats-cache.json if available."""
+    stats_path = os.path.join(claude_dir, "statsCache.json")
+    if not os.path.exists(stats_path):
+        # Also check alternate location
+        stats_path = os.path.join(claude_dir, "stats-cache.json")
+    if not os.path.exists(stats_path):
+        return None
+    try:
+        with open(stats_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
 def parse_claude_code_sessions(claude_dir, cutoff, history):
     """Parse all Claude Code project session files."""
     sessions = []
+    stats_cache = load_stats_cache(claude_dir)
     project_dirs = glob.glob(os.path.join(claude_dir, "projects", "*"))
 
     for pdir in project_dirs:
@@ -115,6 +131,24 @@ def parse_claude_code_sessions(claude_dir, cutoff, history):
             summary = parse_claude_code_session(fp, sid, history)
             if summary and summary["turns"] > 0:
                 sessions.append(summary)
+
+    # If stats-cache has higher token counts, use those instead
+    if stats_cache and sessions:
+        model_usage = stats_cache.get("modelUsage", {})
+        cache_total = 0
+        for model_stats in model_usage.values():
+            cache_total += model_stats.get("inputTokens", 0)
+            cache_total += model_stats.get("outputTokens", 0)
+            cache_total += model_stats.get("cacheReadInputTokens", 0)
+            cache_total += model_stats.get("cacheCreationInputTokens", 0)
+
+        parsed_total = sum(s.get("tokens", 0) for s in sessions)
+        if cache_total > parsed_total * 1.5:
+            # Stats cache has significantly more tokens — distribute proportionally
+            ratio = cache_total / max(parsed_total, 1)
+            for s in sessions:
+                if s["agent"] == "claude-code":
+                    s["tokens"] = int(s["tokens"] * ratio)
 
     return sessions
 
@@ -176,6 +210,8 @@ def parse_claude_code_session(filepath, session_id, history):
                         model = m["model"]
                     usage = m.get("usage", {})
                     total_in += usage.get("input_tokens", 0)
+                    total_in += usage.get("cache_read_input_tokens", 0)
+                    total_in += usage.get("cache_creation_input_tokens", 0)
                     total_out += usage.get("output_tokens", 0)
                     for block in (m.get("content") or []):
                         if isinstance(block, dict) and block.get("type") == "tool_use":
@@ -286,10 +322,17 @@ def parse_codex_session(filepath):
                         model = payload.get("model", "")
 
                 elif etype == "event_msg":
-                    if payload.get("type") == "user_message":
+                    ptype = payload.get("type", "")
+                    if ptype == "user_message":
                         user_turns += 1
                         if not first_user_msg:
                             first_user_msg = payload.get("message", "")[:200]
+                    elif ptype == "token_count":
+                        info = payload.get("info", {})
+                        tu = info.get("total_token_usage", {})
+                        total_in += tu.get("input_tokens", 0)
+                        total_out += tu.get("output_tokens", 0)
+                        total_out += tu.get("reasoning_output_tokens", 0)
 
                 elif etype == "response_item":
                     ptype = payload.get("type", "")

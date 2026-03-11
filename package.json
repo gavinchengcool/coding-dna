@@ -1,7 +1,14 @@
 {
   "name": "builderbio",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "The bio link for builders who ship with AI",
+  "homepage": "https://builderbio.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gavinchengcool/builderbio.git"
+  },
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

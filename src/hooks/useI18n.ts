@@ -8,19 +8,19 @@ const translations: Record<string, string> = {
   "hero.subtitle":
     "How you build with AI is who you are. One command turns your daily coding sessions into a shareable profile. Drop it in your bio.",
   "hero.tagline": "",
-  "hero.install": "SEND THIS TO YOUR CODING AGENT → GET YOUR BIO LINK",
+  "hero.install": "PASTE INTO YOUR CODING AGENT",
   "hero.howItWorks": "How it works",
 
   // Steps
   "step.1.title": "Install",
   "step.1.desc":
-    "Copy the command above, paste it into your coding agent. It learns the skill and takes it from there.",
-  "step.2.title": "Generate",
+    "Paste the command into your coding agent. It installs a skill file and parser script into ~/.builderbio/ — you can read every line before running.",
+  "step.2.title": "Analyze",
   "step.2.desc":
-    "AI reads your local sessions and distills your builder identity — all data stays on your device.",
+    "Your agent reads local session logs and computes stats: session counts, tool usage, activity patterns. No code or conversation content leaves your machine.",
   "step.3.title": "Share",
   "step.3.desc":
-    "Get a builderbio page. Drop it in your LinkedIn, Twitter, GitHub — or share with anyone.",
+    "You can ask your agent to tweak anything before sharing — make sure it says what you want. Drop the link in your LinkedIn, GitHub, or resume.",
 
   // Dashboard
   "dashboard.title": "My Profile",

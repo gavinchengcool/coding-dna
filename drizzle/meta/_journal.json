@@ -8,6 +8,13 @@
       "when": 1773038168273,
       "tag": "0000_chunky_fenris",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773216798488,
+      "tag": "0001_lean_khan",
+      "breakpoints": true
     }
   ]
 }

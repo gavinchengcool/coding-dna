@@ -1,31 +1,53 @@
-# builderbio
+# builderbio { }
 
-The bio link for builders who ship with AI. Linktree is for creators. This is for builders.
+The bio link for builders who ship with AI.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## What is this?
 
-builderbio analyzes your conversations with AI coding tools (Claude Code, Cursor, Codex) and generates a shareable builder profile — cognitive style radar, capability rings, activity heatmap, and behavioral fingerprint.
+One command turns your AI coding agent sessions into a shareable builder profile at `yourname.builderbio.dev` — cognitive style, capability rings, activity heatmap, project gallery, and more.
 
-All conversation data is analyzed **locally**. Only the generated summary/profile is uploaded.
+All session data is analyzed **locally**. Only aggregate statistics are published.
 
 ## Quick Start
 
-### For builders (end users)
+Paste this into your coding agent (Claude Code, Cursor, or Codex):
 
 ```bash
 curl -sfL https://builderbio.dev/install.sh | bash
 ```
 
-Then in Claude Code or Cursor:
+Your agent installs a skill file, reads your local session logs, computes stats, and publishes your profile. The only interaction is choosing a visual theme.
 
-```
-/builderbio-summarize
-```
+## How It Works
 
-### For contributors (self-hosting)
+1. **Install** — The command downloads a skill file and a Python parser script into `~/.builderbio/skills/builderbio/`. It symlinks into your agent's skill directory.
+2. **Analyze** — Your agent reads local session logs and computes aggregate statistics: session counts, tool usage patterns, activity timelines, and project clusters.
+3. **Share** — A profile page is published at `yourname.builderbio.dev`. Drop it in your LinkedIn, GitHub, or resume.
+
+## What Data Is Accessed
+
+**Read:**
+- Session metadata from `~/.claude/projects/`, `~/.codex/sessions/`, and `~/.openclaw/agents/`
+- Specifically: message counts, tool call names, timestamps, working directories, and token usage
+
+**NOT read:**
+- File contents from your projects
+- Environment variables, credentials, or API keys
+- Git diffs or source code
+
+## Privacy
+
+- **Local analysis**: All session parsing runs on your machine. Raw session data never leaves your device.
+- **Publish key**: A `device_id` is a SHA-256 hash of hostname + username + architecture. It serves as a stable publish key so the same machine always updates the same profile URL. It cannot be reversed.
+- **Automatic redaction**: File paths, credentials, and API keys are stripped before the profile is built.
+- **Open source**: The full source is readable at `~/.builderbio/skills/builderbio/` after install.
+
+## Self-Hosting
 
 ```bash
-git clone <repo-url> builderbio
+git clone https://github.com/gavinchengcool/builderbio.git builderbio
 cd builderbio
 npm install
 ```
@@ -44,70 +66,16 @@ npm run db:push    # Create tables
 npm run dev        # Start dev server
 ```
 
-## Architecture
-
-```
-Client (CLI)                        Server (Next.js on Vercel)
-─────────────                       ──────────────────────────
-install.sh                          /api/auth/device     → device auth flow
-device-auth.sh                      /api/auth/logout     → revoke token
-discover-sessions.sh                /api/profile/sync    → store profile
-compute-stats.py (local)            /api/profile/me      → get own profile
-analysis-prompt.md (AI)             /api/profile/:user   → public profile
-assemble-payload.py                 /api/search/people   → search builders
-post-sync.sh                        /api/search/skills   → search by skill
-                                    /api/connections     → social connections
-                                    /api/admin/stats     → admin dashboard
-```
-
-## Pages
-
-| Route | Description |
-|-------|-------------|
-| `/` | Landing page with install instructions |
-| `/me` | Authenticated dashboard with full profile |
-| `/u/[username]` | Public bio link profile |
-| `/club` | Builder directory with search |
-| `/auth/device` | Device code authentication |
-| `/admin` | Admin dashboard (admin role only) |
-
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
 - **Database**: PostgreSQL via Neon + Drizzle ORM
-- **Styling**: Tailwind CSS v4, dark terminal theme
+- **Styling**: Tailwind CSS v4
 - **Auth**: Bearer token + SHA-256 (no cookies, CLI-native)
 - **Charts**: Pure SVG components (zero dependencies)
 - **Validation**: Zod v4
-- **Search**: PostgreSQL full-text search (tsvector)
 - **Deployment**: Vercel
-
-## Client Skills
-
-| Skill | Description |
-|-------|-------------|
-| `builderbio-summarize` | 7-step analysis pipeline |
-| `builderbio-search-people` | Search builders from CLI |
-| `builderbio-search-skills` | Search by technology/skill |
-| `builderbio-logout` | Revoke token and log out |
-
-## Database
-
-6 tables: `users`, `auth_tokens`, `device_codes`, `profiles`, `connections`, `sync_history`.
-
-Run `npm run db:push` to create tables, or `npm run db:generate` to generate migration SQL.
-
-## Scripts
-
-```bash
-npm run dev          # Development server
-npm run build        # Production build
-npm run lint         # ESLint
-npm run db:push      # Push schema to database
-npm run db:generate  # Generate migration files
-npm run db:studio    # Drizzle Studio (DB browser)
-```
 
 ## License
 
-MIT
+[MIT](LICENSE)

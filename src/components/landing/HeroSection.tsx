@@ -66,10 +66,24 @@ export default function HeroSection({ t }: HeroSectionProps) {
         </p>
 
         {/* Install command */}
-        <div className="mb-16 sm:mb-28 fade-in-up">
+        <div className="mb-20 sm:mb-36 fade-in-up">
           <p className="text-[10px] sm:text-xs text-accent mb-3 font-bold tracking-wider leading-relaxed">
             {t("hero.install")}
           </p>
+          {/* Agent badges */}
+          <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
+            {["OpenClaw", "Codex", "Claude Code", "Cursor"].map((name) => (
+              <span
+                key={name}
+                className="text-[10px] h-5 px-2 rounded-full border border-border text-text-secondary inline-flex items-center justify-center"
+              >
+                {name}
+              </span>
+            ))}
+            <span className="text-[10px] h-5 px-2 rounded-full border border-border text-text-secondary inline-flex items-center justify-center" style={{ paddingBottom: '3px' }}>
+              ...
+            </span>
+          </div>
           <div className="terminal-block flex items-center gap-2 sm:gap-3 w-full sm:inline-flex sm:w-auto glow-breathe">
             <span className="text-accent shrink-0">$</span>
             <code className="text-[10px] sm:text-sm text-text-primary break-all sm:break-normal min-w-0">{installCmd}</code>
@@ -92,16 +106,54 @@ export default function HeroSection({ t }: HeroSectionProps) {
           </div>
         </div>
 
+        {/* Trust signals */}
+        <div className="mb-20 sm:mb-28 fade-in-up">
+          <h2 className="text-xs text-text-muted mb-6 sm:mb-8 tracking-wider uppercase">
+            Why trust it
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
+            {[
+              { title: "Open source", desc: "Every line of code is readable — the skill file, the parser script, and this website." },
+              { title: "Runs locally", desc: "All session parsing happens on your machine. Raw data never leaves your device." },
+              { title: "Aggregate only", desc: "Only stats are published — session counts, tool usage, timelines. No code, no conversations." },
+            ].map((item) => (
+              <div key={item.title} className="terminal-block text-left space-y-2 h-full">
+                <span className="text-sm font-bold text-text-primary">{item.title}</span>
+                <p className="text-xs text-text-secondary leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-4 mt-6 text-xs">
+            <a
+              href="/skills/builderbio/SKILL.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-secondary hover:text-accent transition-colors underline"
+            >
+              Skill
+            </a>
+            <span className="text-text-muted">·</span>
+            <a
+              href="https://github.com/gavinchengcool/builderbio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-secondary hover:text-accent transition-colors underline"
+            >
+              GitHub
+            </a>
+          </div>
+        </div>
+
         {/* How it works */}
-        <div className="mb-16 sm:mb-20 fade-in-up">
+        <div className="mb-20 sm:mb-28 fade-in-up">
           <h2 className="text-xs text-text-muted mb-6 sm:mb-8 tracking-wider uppercase">
             {t("hero.howItWorks")}
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
             {[1, 2, 3].map((step) => (
               <div
                 key={step}
-                className="terminal-block text-left space-y-2"
+                className="terminal-block text-left space-y-2 h-full"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-accent font-bold text-lg">
@@ -126,7 +178,7 @@ export default function HeroSection({ t }: HeroSectionProps) {
           </h2>
           <a
             href="https://gavin.builderbio.dev"
-            className="terminal-block max-w-lg mx-auto text-left border-accent/30 block hover:border-accent/60 transition-colors"
+            className="terminal-block max-w-3xl mx-auto text-left border-accent/30 block hover:border-accent/60 transition-colors"
           >
             {/* Window chrome */}
             <div className="flex items-center gap-2 mb-4">

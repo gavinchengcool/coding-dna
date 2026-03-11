@@ -144,9 +144,13 @@ export default function TasteBoardPage() {
                       <div className="text-center">
                         <p className="text-sm font-bold text-accent">
                           {profile.totalTokens
-                            ? profile.totalTokens >= 1000
-                              ? `${(profile.totalTokens / 1000).toFixed(1)}K`
-                              : profile.totalTokens
+                            ? profile.totalTokens >= 1e9
+                              ? `${(profile.totalTokens / 1e9).toFixed(2)}B`
+                              : profile.totalTokens >= 1e6
+                                ? `${(profile.totalTokens / 1e6).toFixed(1)}M`
+                                : profile.totalTokens >= 1e3
+                                  ? `${(profile.totalTokens / 1e3).toFixed(1)}K`
+                                  : profile.totalTokens
                             : "—"}
                         </p>
                         <p className="text-[10px] text-text-muted">tokens</p>
