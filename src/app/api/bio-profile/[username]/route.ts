@@ -276,6 +276,7 @@ ${JSON.stringify({
 </script>`;
 
     template = template.replace("<title>BuilderBio</title>", seoMeta);
+    template = template.replace("__PROFILE_URL__", profileUrl);
 
     // Inject data
     template = template.replace(
