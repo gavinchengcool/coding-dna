@@ -1,21 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import InstallCommandBox from "@/components/InstallCommandBox";
 
 interface HeroSectionProps {
   t: (key: string) => string;
 }
 
 export default function HeroSection({ t }: HeroSectionProps) {
-  const [copied, setCopied] = useState(false);
-  const installCmd = "curl -sfL https://builderbio.dev/install.sh | bash";
   const sectionRef = useRef<HTMLElement>(null);
-
-  function handleCopy() {
-    navigator.clipboard.writeText(installCmd);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -67,43 +60,7 @@ export default function HeroSection({ t }: HeroSectionProps) {
 
         {/* Install command */}
         <div className="mb-20 sm:mb-36 fade-in-up">
-          <p className="text-[10px] sm:text-xs text-accent mb-3 font-bold tracking-wider leading-relaxed">
-            {t("hero.install")}
-          </p>
-          {/* Agent badges */}
-          <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
-            {["OpenClaw", "Codex", "Claude Code", "Cursor"].map((name) => (
-              <span
-                key={name}
-                className="text-[10px] h-5 px-2 rounded-full border border-border text-text-secondary inline-flex items-center justify-center"
-              >
-                {name}
-              </span>
-            ))}
-            <span className="text-[10px] h-5 px-2 rounded-full border border-border text-text-secondary inline-flex items-center justify-center" style={{ paddingBottom: '3px' }}>
-              ...
-            </span>
-          </div>
-          <div className="terminal-block flex items-center gap-2 sm:gap-3 w-full sm:inline-flex sm:w-auto glow-breathe">
-            <span className="text-accent shrink-0">$</span>
-            <code className="text-[10px] sm:text-sm text-text-primary break-all sm:break-normal min-w-0">{installCmd}</code>
-            <button
-              onClick={handleCopy}
-              className="shrink-0 ml-auto sm:ml-2 p-1.5 rounded hover:bg-bg-tertiary transition-colors text-text-muted hover:text-accent"
-              title="Copy to clipboard"
-            >
-              {copied ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                </svg>
-              )}
-            </button>
-          </div>
+          <InstallCommandBox eyebrow={t("hero.install")} glow />
         </div>
 
         {/* Trust signals */}

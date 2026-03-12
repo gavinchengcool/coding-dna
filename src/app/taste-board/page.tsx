@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import InstallCommandBox from "@/components/InstallCommandBox";
 import { useI18n } from "@/hooks/useI18n";
 
 interface ProfileCard {
@@ -56,6 +57,18 @@ export default function TasteBoardPage() {
       <h1 className="text-xl font-bold text-accent mb-8">
         <span className="text-text-muted">$</span> {t("club.title")}
       </h1>
+
+      <div className="terminal-block border-accent/30 mb-8 sm:mb-10">
+        <div className="space-y-4">
+          <div className="max-w-2xl">
+            <p className="text-sm sm:text-base font-bold text-text-primary">
+              Like what you see?
+            </p>
+          </div>
+
+          <InstallCommandBox eyebrow={t("hero.install")} align="left" />
+        </div>
+      </div>
 
       {loading ? (
         <p className="text-sm text-text-secondary text-center py-10">
