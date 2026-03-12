@@ -685,7 +685,7 @@ export default async function BuilderBioPreviewPage() {
                   </span>
                 </div>
 
-                <h2 className="max-w-4xl text-[2rem] font-black leading-[0.98] text-text-primary sm:text-6xl">
+                <h2 className="max-w-4xl text-[2rem] font-black leading-[1.06] text-text-primary sm:leading-[0.98] sm:text-6xl">
                   {preview.thesis}
                 </h2>
                 <p className="mt-5 max-w-3xl text-sm leading-7 text-text-secondary sm:text-base">
