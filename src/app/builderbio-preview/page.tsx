@@ -539,6 +539,8 @@ export default async function BuilderBioPreviewPage() {
                         <a
                           key={item.label}
                           href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-text-secondary transition-colors hover:border-accent/40 hover:text-accent"
                         >
                           {item.label}
