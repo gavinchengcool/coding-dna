@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import InstallCommandBox from "@/components/InstallCommandBox";
 import { useI18n } from "@/hooks/useI18n";
 
@@ -18,6 +18,13 @@ interface ProfileCard {
   subtitle: string | null;
 }
 
+const DEFAULT_AVATAR_COLOR = "#00D084";
+const BRAND_FALLBACK_AVATAR = {
+  backgroundColor: "rgba(255, 107, 53, 0.14)",
+  border: "1px solid rgba(255, 107, 53, 0.35)",
+  color: "#FF6B35",
+};
+
 function getCardSummary(profile: ProfileCard): string | null {
   const summary = profile.summary?.trim();
   if (summary) return summary;
@@ -26,6 +33,17 @@ function getCardSummary(profile: ProfileCard): string | null {
   if (firstFrameworkSentence) return firstFrameworkSentence;
 
   return null;
+}
+
+function getFallbackAvatarStyle(avatarColor: string | null): CSSProperties {
+  if (!avatarColor || avatarColor.toUpperCase() === DEFAULT_AVATAR_COLOR) {
+    return BRAND_FALLBACK_AVATAR;
+  }
+
+  return {
+    backgroundColor: avatarColor,
+    color: "#111111",
+  };
 }
 
 export default function TasteBoardPage() {
@@ -124,8 +142,8 @@ export default function TasteBoardPage() {
                       }}
                     />
                     <div
-                      className="w-10 h-10 rounded-full items-center justify-center text-sm font-bold text-bg-primary hidden"
-                      style={{ backgroundColor: profile.avatarColor || "#00D084" }}
+                      className="hidden h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+                      style={getFallbackAvatarStyle(profile.avatarColor)}
                     >
                       {(profile.username || "?")[0].toUpperCase()}
                     </div>
