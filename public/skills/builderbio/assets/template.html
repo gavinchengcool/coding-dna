@@ -441,13 +441,13 @@ section{padding:60px 0}
 <div class="divider" id="divider-after-spotlight"></div>
 
 <section id="section-agentroles">
-  <div class="sh"><h2>Agent Roles</h2><p>How different agents fit into the work</p></div>
+  <div class="sh"><h2>Agent Roles</h2><p>What each agent is actually doing</p></div>
   <div class="role-grid" id="agent-roles"></div>
 </section>
 <div class="divider" id="divider-after-agentroles"></div>
 
 <section id="section-moves">
-  <div class="sh"><h2>Signature Moves</h2><p>Patterns that make this builder feel like themselves</p></div>
+  <div class="sh"><h2>Signature Moves</h2><p>Habits that keep showing up in the work</p></div>
   <div class="move-grid" id="signature-moves"></div>
 </section>
 <div class="divider" id="divider-after-moves"></div>
@@ -591,7 +591,7 @@ function deriveManagementStyle(){
   const traits=[];
   if(st.prompt_type_desc)traits.push(st.prompt_type_desc);
   if(commandRatio>=25)traits.push(commandRatio+'% of recorded tool usage runs through terminal-style tools.');
-  if(Object.keys(p.agents_used||{}).length>1)traits.push('Different agents are used for different jobs instead of forcing one model to do everything.');
+  if(Object.keys(p.agents_used||{}).length>1)traits.push('Different agents handle different parts of the workflow instead of being forced into the same job.');
   if(E.time&&E.time.peak_detail)traits.push(E.time.peak_detail);
   if(!traits.length&&st.loyalty_desc)traits.push(st.loyalty_desc);
   return {label:label,summary:summary,traits:uniq(traits).slice(0,3)};
@@ -601,11 +601,11 @@ function deriveAgentRoles(){
   return Object.entries(cmp).sort(function(a,b){return (b[1].total_turns||0)-(a[1].total_turns||0);}).map(function(entry,i){
     const agent=entry[0];const data=entry[1]||{};
     const avg=Number(data.avg_turns)||0;const sessions=Number(data.sessions)||0;const turns=Number(data.total_turns)||0;const tools=Number(data.total_tool_calls)||0;
-    let role='Main workhorse';let summary='Handles the bulk of everyday delivery and repeated build loops.';
-    if(avg>=100){role='Deep work bench';summary='Used when the work needs longer context windows, deeper restructuring, and more time inside one thread.';}
-    else if(sessions>=40&&tools>=turns){role='Fast operator';summary='Best at tool-heavy execution, quick iteration, and keeping shipping momentum high.';}
-    else if(sessions>=40){role='Iteration engine';summary='Returns often for fast follow-ups, cleanup, and pushing projects forward in short loops.';}
-    else if(tools>=turns){role='Execution partner';summary='Leans more toward getting commands and edits done than holding long conversational context.';}
+    let role='Core builder';let summary='Carries the bulk of day-to-day delivery and repeated build loops.';
+    if(avg>=100){role='Deep work';summary='Shows up when the work needs longer context, harder restructuring, and time to stay inside one thread.';}
+    else if(sessions>=40&&tools>=turns){role='Fast execution';summary='Best for tool-heavy execution, quick iteration, and keeping momentum high.';}
+    else if(sessions>=40){role='Iteration loop';summary='Returns often for follow-ups, cleanup, and short-loop shipping.';}
+    else if(tools>=turns){role='Execution-heavy';summary='Used more for commands and edits than for holding long conversational context.';}
     const topTool=Array.isArray(data.top_tools)&&data.top_tools[0]?data.top_tools[0][0]:'';
     return{
       name:agentLabel(agent,data),
@@ -621,8 +621,8 @@ function deriveSignatureMoves(){
   const commandRatio=Math.round((Number(st.command_ratio)||0)*100);
   const moves=[];
   if(commandRatio>=25)moves.push({title:'Keeps the loop in the terminal',text:commandRatio+'% of recorded tool usage runs through Bash, shell commands, or stdin-driven execution.',proof:'Tool distribution'});
-  if(Object.keys(p.agents_used||{}).length>1)moves.push({title:'Splits agents by role',text:'Different agents are used for different kinds of work instead of competing for the exact same job.',proof:'Agent comparison'});
-  if(sig)moves.push({title:'Returns to a flagship build',text:'"'+sig.name+'" carries the clearest concentration of turns, tools, and attention in this BuilderBio.',proof:(sig.tags||[]).slice(0,3).join(' · ')||'Project clustering'});
+  if(Object.keys(p.agents_used||{}).length>1)moves.push({title:'Splits agents by role',text:'Different agents handle different parts of the workflow instead of competing for the exact same job.',proof:'Agent comparison'});
+  if(sig)moves.push({title:'Returns to a flagship build',text:'"'+sig.name+'" is where the biggest share of turns, tools, and attention keeps coming back together.',proof:(sig.tags||[]).slice(0,3).join(' · ')||'Project clustering'});
   const techLabels=topTechEntries().slice(0,3).map(function(entry){return entry[0];});
   if(techLabels.some(function(label){return /(product|research|strategy|content)/i.test(label);})){
     moves.push({title:'Turns thinking into artifacts',text:'Research, product shaping, and execution show up inside the same build history instead of living in separate tools.',proof:techLabels.join(' · ')});
@@ -1087,7 +1087,7 @@ safeRun('hero',function(){
   const sl=p.social_links||[];
   if(sl.length){
     document.getElementById('social-row').innerHTML=sl.map(s=>
-      `<a class="social-link" href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(s.platform)}">${socialIcons[s.platform.toLowerCase()]||socialIcons.website}</a>`
+      `<a class="social-link" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" title="${esc(s.platform)}">${socialIcons[s.platform.toLowerCase()]||socialIcons.website}</a>`
     ).join('');
   }else{
     document.getElementById('social-row').style.display='none';
@@ -1155,11 +1155,15 @@ safeRun('spotlight',function(){
 
   if(signatureProject){
     const proofs=buildSignatureProofs(signatureProject);
+    const signatureSummary=signatureProject.description||signatureProject.summary||'This is where the clearest concentration of work shows up in the scanned history.';
+    const signatureWhy=signatureProject.tags&&signatureProject.tags.length
+      ? 'It pulls together '+signatureProject.tags.slice(0,3).join(', ')+' and a repeated block of attention across the logs.'
+      : 'This is where the scattered work starts to read like a real build instead of a loose collection of experiments.';
     signatureCard.innerHTML=`
       <div class="spotlight-meta">Signature Build</div>
       <div class="spotlight-title">${esc(signatureProject.name)}</div>
-      <div class="spotlight-text">${esc(signatureProject.description||signatureProject.summary||'This project carries the clearest concentration of work in the current BuilderBio.')}</div>
-      <div class="spotlight-text">${esc('Why it matters: '+(signatureProject.tags&&signatureProject.tags.length?'it pulls together '+signatureProject.tags.slice(0,3).join(', ')+' and the biggest share of repeated effort.':'it is where the work most clearly stops looking like experiments and starts looking like a real product.'))}</div>
+      <div class="spotlight-text">${esc(signatureSummary)}</div>
+      <div class="spotlight-text">${esc(signatureWhy)}</div>
       ${proofs.length?`<div class="spotlight-proof">${proofs.map(function(item){return`<div class="proof-pill"><span class="proof-dot"></span><span>${esc(item)}</span></div>`;}).join('')}</div>`:''}
     `;
   }else{
