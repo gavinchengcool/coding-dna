@@ -694,6 +694,8 @@ function buildPageCopy(preview: typeof previewFallback, liveProfile: boolean) {
   const lang = preview.lang === "en" ? "en" : "zh";
   const busiestDay = preview.highlights.busiestDay;
   const biggestSession = preview.highlights.biggestSession;
+  const hasBusiestDay =
+    Boolean(busiestDay.date) && (busiestDay.sessions > 0 || busiestDay.turns > 0);
   const eraTitles = preview.eras
     .map((era) => era?.title)
     .filter(Boolean)
@@ -766,8 +768,12 @@ function buildPageCopy(preview: typeof previewFallback, liveProfile: boolean) {
     evidenceSummary:
       preview.evidence.coverage.summary ||
       (lang === "zh"
-        ? `从 ${preview.whenIbuild.peakLead || preview.whenIbuild.peakWindow} 这段时间高峰，到 ${busiestDay.date} 的忙碌峰值，再到不同 agent 的使用密度，这些结论都能在原始日志里找到对应证据。`
-        : `From the ${preview.whenIbuild.peakLead || preview.whenIbuild.peakWindow} time peak, to the busiest day on ${busiestDay.date}, to the relative density of each agent trace, each conclusion maps back to the raw logs.`),
+        ? hasBusiestDay
+          ? `从 ${preview.whenIbuild.peakLead || preview.whenIbuild.peakWindow} 这段时间高峰，到 ${busiestDay.date} 的忙碌峰值，再到不同 agent 的使用密度，这些结论都能在原始日志里找到对应证据。`
+          : `从 ${preview.whenIbuild.peakLead || preview.whenIbuild.peakWindow} 这段时间高峰，到不同 agent 的使用密度，这些结论都能在原始日志里找到对应证据。`
+        : hasBusiestDay
+          ? `From the ${preview.whenIbuild.peakLead || preview.whenIbuild.peakWindow} time peak, to the busiest day on ${busiestDay.date}, to the relative density of each agent trace, each conclusion maps back to the raw logs.`
+          : `From the ${preview.whenIbuild.peakLead || preview.whenIbuild.peakWindow} time peak to the relative density of each agent trace, each conclusion maps back to the raw logs.`),
     evidenceNote:
       preview.evidence.coverage.note ||
       (lang === "zh"
@@ -805,7 +811,9 @@ function getHourEntries(preview: PreviewData) {
 }
 
 function getHeatmapCells(preview: PreviewData) {
-  const heatmapDates = Object.keys(preview.activity.heatmap || {}).sort();
+  const heatmapDates = Object.keys(preview.activity.heatmap || {})
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+    .sort();
   const firstHeatmapDate = heatmapDates.length
     ? new Date(`${heatmapDates[0]}T00:00:00`)
     : new Date();
@@ -825,6 +833,28 @@ function getHeatmapCells(preview: PreviewData) {
       empty: false,
     })),
   ];
+}
+
+function hasRenderableHeatmapCells(
+  cells: Array<{ empty: boolean }>
+): boolean {
+  return cells.some((cell) => !cell.empty);
+}
+
+function renderHeatmapFallback(lang: "zh" | "en", tone: "light" | "dark" = "light") {
+  return (
+    <div
+      className={`rounded-2xl border px-4 py-4 text-sm leading-6 ${
+        tone === "dark"
+          ? "border-white/10 bg-black/10 text-white/72"
+          : "border-border bg-bg-primary/55 text-text-secondary"
+      }`}
+    >
+      {lang === "zh"
+        ? "这份已发布数据没有带上可渲染的日级活跃热力图，所以这里先保留活跃天数和连续天数，不再硬画坏掉的网格。"
+        : "This published payload did not include a renderable day-level activity heatmap, so BuilderBio keeps the streak and active-day stats here instead of drawing a broken grid."}
+    </div>
+  );
 }
 
 type ThemePageProps = {
@@ -855,17 +885,26 @@ function ThemeCtaBlock({
 
 function MiniHeatmap({ preview }: { preview: PreviewData }) {
   const heatmapCells = getHeatmapCells(preview);
+  const hasHeatmap = hasRenderableHeatmapCells(heatmapCells);
 
   return (
-    <div className="grid grid-cols-7 gap-1.5">
-      {heatmapCells.map((cell) => (
-        <div
-          key={cell.key}
-          className={`aspect-square rounded-[6px] border border-border/60 ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
-          title={cell.date || undefined}
-        />
-      ))}
-    </div>
+    hasHeatmap ? (
+      <div className="grid grid-cols-7 gap-1.5">
+        {heatmapCells.map((cell) => (
+          <div
+            key={cell.key}
+            className={`aspect-square rounded-[6px] border border-border/60 ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
+            title={cell.date || undefined}
+          />
+        ))}
+      </div>
+    ) : (
+      <div className="rounded-2xl border border-border bg-bg-primary/55 px-4 py-4 text-sm text-text-secondary">
+        {preview.lang === "zh"
+          ? "日级活跃热力图在这份数据里不可用。"
+          : "Day-level activity heatmap is unavailable in this payload."}
+      </div>
+    )
   );
 }
 
@@ -915,6 +954,7 @@ function BuilderCorePack({
   const hourEntries = getHourEntries(preview);
   const maxHourSessions = Math.max(...hourEntries.map((entry) => entry.sessions), 1);
   const heatmapCells = getHeatmapCells(preview);
+  const hasHeatmap = hasRenderableHeatmapCells(heatmapCells);
   const peakHeadline =
     preview.whenIbuild.peakLead || preview.whenIbuild.peakHour || preview.whenIbuild.peakWindow;
   const peakHeadlineIsWindow =
@@ -1043,7 +1083,7 @@ function BuilderCorePack({
         </section>
       ) : null}
 
-      {!hidden.has("comparison") ? (
+      {!hidden.has("comparison") && preview.comparison.length > 0 ? (
         <section className={`mb-8 sm:mb-10 ${sectionClass}`}>
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
             Agent Comparison
@@ -1191,17 +1231,21 @@ function BuilderCorePack({
             <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
               {pageCopy.activityHeading}
             </h2>
-            <div className="mt-6 overflow-x-auto pb-2">
-              <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1">
-                {heatmapCells.map((cell) => (
-                  <div
-                    key={cell.key}
-                    className={`h-3 w-3 rounded-[3px] ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
-                    title={cell.empty ? undefined : `${cell.date}: ${cell.value} turns`}
-                  />
-                ))}
+            {hasHeatmap ? (
+              <div className="mt-6 overflow-x-auto pb-2">
+                <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1">
+                  {heatmapCells.map((cell) => (
+                    <div
+                      key={cell.key}
+                      className={`h-3 w-3 rounded-[3px] ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
+                      title={cell.empty ? undefined : `${cell.date}: ${cell.value} turns`}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mt-6">{renderHeatmapFallback(lang, tone)}</div>
+            )}
             <div className={`mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm ${textClass}`}>
               <span>
                 {ui.activityLongest}: <strong className={titleClass}>{preview.activity.longestStreak} {ui.activityDays}</strong>
@@ -1254,6 +1298,7 @@ function ConversationFirstRecapPage({
   const hourEntries = getHourEntries(preview);
   const maxHourSessions = Math.max(...hourEntries.map((entry) => entry.sessions), 1);
   const heatmapCells = getHeatmapCells(preview);
+  const hasHeatmap = hasRenderableHeatmapCells(heatmapCells);
   const chosenTheme = getChosenTheme(preview);
 
   return (
@@ -1497,15 +1542,19 @@ function ConversationFirstRecapPage({
 
               <div className="mt-5 rounded-[24px] border border-border bg-bg-primary/55 p-4">
                 <div className="mb-3 text-[11px] uppercase tracking-[0.18em] text-text-muted">Conversation activity</div>
-                <div className="grid grid-cols-7 gap-1.5">
-                  {heatmapCells.map((cell) => (
-                    <div
-                      key={cell.key}
-                      className={`aspect-square rounded-[6px] border border-border/60 ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
-                      title={cell.date || undefined}
-                    />
-                  ))}
-                </div>
+                {hasHeatmap ? (
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {heatmapCells.map((cell) => (
+                      <div
+                        key={cell.key}
+                        className={`aspect-square rounded-[6px] border border-border/60 ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
+                        title={cell.date || undefined}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  renderHeatmapFallback(preview.lang === "en" ? "en" : "zh")
+                )}
               </div>
             </div>
           </section>
@@ -2354,6 +2403,7 @@ export default async function BuilderBioPreviewPage({
   const hourEntries = getHourEntries(preview);
   const maxHourSessions = Math.max(...hourEntries.map((entry) => entry.sessions), 1);
   const heatmapCells = getHeatmapCells(preview);
+  const hasHeatmap = hasRenderableHeatmapCells(heatmapCells);
   const peakHeadline =
     preview.whenIbuild.peakLead || preview.whenIbuild.peakHour || preview.whenIbuild.peakWindow;
   const peakHeadlineIsWindow =
@@ -2925,6 +2975,7 @@ export default async function BuilderBioPreviewPage({
               </div>
             </div>
 
+            {preview.comparison.length > 0 ? (
             <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
               <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
                 Agent Comparison
@@ -3008,6 +3059,7 @@ export default async function BuilderBioPreviewPage({
                 })}
               </div>
             </div>
+            ) : null}
           </section>
 
           <section className="mb-8 rounded-3xl border border-border bg-bg-secondary p-5 sm:mb-10 sm:p-8">
@@ -3230,17 +3282,21 @@ export default async function BuilderBioPreviewPage({
               <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
                 {pageCopy.activityHeading}
               </h2>
-              <div className="mt-6 overflow-x-auto pb-2">
-                <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1">
-                  {heatmapCells.map((cell) => (
-                    <div
-                      key={cell.key}
-                      className={`h-3 w-3 rounded-[3px] ${heatmapLevel(cell.value)}`}
-                      title={cell.empty ? undefined : `${cell.date}: ${cell.value} turns`}
-                    />
-                  ))}
+              {hasHeatmap ? (
+                <div className="mt-6 overflow-x-auto pb-2">
+                  <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1">
+                    {heatmapCells.map((cell) => (
+                      <div
+                        key={cell.key}
+                        className={`h-3 w-3 rounded-[3px] ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
+                        title={cell.empty ? undefined : `${cell.date}: ${cell.value} turns`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="mt-6">{renderHeatmapFallback(lang)}</div>
+              )}
               <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-text-secondary">
                 <span>
                   {ui.activityLongest}: <strong className="text-text-primary">{preview.activity.longestStreak} {ui.activityDays}</strong>
@@ -3255,15 +3311,17 @@ export default async function BuilderBioPreviewPage({
                   </strong>
                 </span>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-xs text-text-muted">
-                <span>{ui.activityLess}</span>
-                <span className="h-3 w-3 rounded-[3px] bg-bg-primary" />
-                <span className="h-3 w-3 rounded-[3px] bg-[#18362f]" />
-                <span className="h-3 w-3 rounded-[3px] bg-[#1f6b58]" />
-                <span className="h-3 w-3 rounded-[3px] bg-[#27a783]" />
-                <span className="h-3 w-3 rounded-[3px] bg-[#34D399]" />
-                <span>{ui.activityMore}</span>
-              </div>
+              {hasHeatmap ? (
+                <div className="mt-4 flex items-center gap-2 text-xs text-text-muted">
+                  <span>{ui.activityLess}</span>
+                  <span className="h-3 w-3 rounded-[3px] bg-bg-primary" />
+                  <span className="h-3 w-3 rounded-[3px] bg-[#18362f]" />
+                  <span className="h-3 w-3 rounded-[3px] bg-[#1f6b58]" />
+                  <span className="h-3 w-3 rounded-[3px] bg-[#27a783]" />
+                  <span className="h-3 w-3 rounded-[3px] bg-[#34D399]" />
+                  <span>{ui.activityMore}</span>
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">

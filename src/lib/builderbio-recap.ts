@@ -86,6 +86,15 @@ function asNumber(value: unknown, fallback = 0): number {
   return fallback;
 }
 
+function asOptionalNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
 function inLang<T>(lang: CopyLang, zh: T, en: T): T {
   return lang === "zh" ? zh : en;
 }
@@ -247,6 +256,107 @@ function hasPeakSignal(time: AnyRecord): boolean {
       Object.keys(asObject(time.period_data)).length ||
       Object.keys(asObject(time.hour_distribution)).length ||
       asNumber(time.peak_hour) > 0
+  );
+}
+
+function isHeatmapDateKey(key: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(key);
+}
+
+function extractHeatmapMap(value: unknown): AnyRecord {
+  const direct = asObject(value);
+  const candidates = [
+    direct,
+    asObject(direct?.heatmap),
+    asObject(direct?.map),
+    asObject(direct?.days),
+    asObject(direct?.daily),
+    asObject(direct?.values),
+  ];
+
+  for (const candidate of candidates) {
+    const entries = Object.entries(candidate).filter(([key, raw]) => {
+      return isHeatmapDateKey(key) && asOptionalNumber(raw) !== null;
+    });
+    if (entries.length) {
+      return Object.fromEntries(
+        entries.map(([key, raw]) => [key, asOptionalNumber(raw) ?? 0])
+      );
+    }
+  }
+
+  return {};
+}
+
+function deriveStreaksFromHeatmap(heatmap: AnyRecord): {
+  activeDays: number;
+  longestStreak: number;
+  currentStreak: number;
+} {
+  const activeDates = Object.entries(heatmap)
+    .filter(([key, value]) => isHeatmapDateKey(key) && asNumber(value) > 0)
+    .map(([key]) => key)
+    .sort();
+
+  if (!activeDates.length) {
+    return {
+      activeDays: 0,
+      longestStreak: 0,
+      currentStreak: 0,
+    };
+  }
+
+  let longestStreak = 1;
+  let runningStreak = 1;
+
+  for (let index = 1; index < activeDates.length; index += 1) {
+    const previous = new Date(`${activeDates[index - 1]}T00:00:00Z`);
+    const current = new Date(`${activeDates[index]}T00:00:00Z`);
+    const diffDays = Math.round(
+      (current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diffDays === 1) {
+      runningStreak += 1;
+    } else {
+      runningStreak = 1;
+    }
+
+    longestStreak = Math.max(longestStreak, runningStreak);
+  }
+
+  let currentStreak = 0;
+  for (let index = activeDates.length - 1; index >= 0; index -= 1) {
+    if (index === activeDates.length - 1) {
+      currentStreak = 1;
+      continue;
+    }
+
+    const previous = new Date(`${activeDates[index]}T00:00:00Z`);
+    const next = new Date(`${activeDates[index + 1]}T00:00:00Z`);
+    const diffDays = Math.round(
+      (next.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diffDays === 1) {
+      currentStreak += 1;
+    } else {
+      break;
+    }
+  }
+
+  return {
+    activeDays: activeDates.length,
+    longestStreak,
+    currentStreak,
+  };
+}
+
+function hasMeaningfulBusiestDay(day: AnyRecord): boolean {
+  return Boolean(
+    asString(day.date) &&
+      ((asOptionalNumber(day.sessions) ?? 0) > 0 ||
+        (asOptionalNumber(day.turns) ?? 0) > 0)
   );
 }
 
@@ -782,12 +892,17 @@ function deriveHighMoments(lang: CopyLang, D: AnyRecord, E: AnyRecord): HighMome
   const time = asObject(E.time);
   const peakWindow = derivePeakWindowLabel(lang, time);
   const peakDetail = derivePeakDetail(lang, time);
-  const peakWeek = evolution.slice().sort((a, b) => asNumber(b.turns) - asNumber(a.turns))[0];
+  const peakWeek = evolution
+    .slice()
+    .sort((a, b) => asNumber(b.turns) - asNumber(a.turns))[0];
   const biggestSession = asObject(highlights.biggest_session);
   const busiestDay = asObject(highlights.busiest_day);
+  const hasPeakWeek = Boolean(peakWeek && asNumber(peakWeek.turns) > 0);
+  const hasBusiestDay = hasMeaningfulBusiestDay(busiestDay);
+  const hasBiggestSession = asNumber(biggestSession.turns) > 0;
 
   return [
-    peakWeek
+    hasPeakWeek
       ? {
           label: inLang(lang, "峰值周", "Peak week"),
           value: `${formatCompact(asNumber(peakWeek.turns))} turns`,
@@ -798,7 +913,7 @@ function deriveHighMoments(lang: CopyLang, D: AnyRecord, E: AnyRecord): HighMome
           ),
         }
       : null,
-    busiestDay
+    hasBusiestDay
       ? {
           label: inLang(lang, "最忙的一天", "Busiest day"),
           value: asString(busiestDay.date),
@@ -815,7 +930,7 @@ function deriveHighMoments(lang: CopyLang, D: AnyRecord, E: AnyRecord): HighMome
           value: peakWindow,
           detail: peakDetail,
         }
-      : biggestSession
+      : hasBiggestSession
         ? {
             label: inLang(lang, "最大会话", "Biggest session"),
             value: `${formatNumber(asNumber(biggestSession.turns))} turns`,
@@ -1180,14 +1295,45 @@ function deriveWhenIbuild(lang: CopyLang, E: AnyRecord) {
 }
 
 function deriveActivity(D: AnyRecord): ActivitySummary {
-  const heatmap = asObject(D.heatmap);
+  const rawHeatmap = asObject(D.heatmap);
+  const fallbackHeatmap =
+    asObject(D.activity_map) ||
+    asObject(D.activityMap) ||
+    asObject(asObject(D.activity).heatmap);
+  const heatmap = extractHeatmapMap(rawHeatmap);
+  const resolvedHeatmap =
+    Object.keys(heatmap).length > 0 ? heatmap : extractHeatmapMap(fallbackHeatmap);
   const highlights = asObject(D.highlights);
+  const derivedStreaks = deriveStreaksFromHeatmap(resolvedHeatmap);
+  const explicitActiveDays = asOptionalNumber(asObject(D.profile).active_days);
+  const rawActiveDays =
+    asOptionalNumber(rawHeatmap.active_days) ??
+    asOptionalNumber(fallbackHeatmap.active_days);
+  const rawTotalDays =
+    asOptionalNumber(rawHeatmap.total_days) ??
+    asOptionalNumber(fallbackHeatmap.total_days);
+  const rawLongestStreak =
+    asOptionalNumber(highlights.longest_streak) ??
+    asOptionalNumber(rawHeatmap.longest_streak) ??
+    asOptionalNumber(fallbackHeatmap.longest_streak);
+  const rawCurrentStreak =
+    asOptionalNumber(highlights.current_streak) ??
+    asOptionalNumber(rawHeatmap.current_streak) ??
+    asOptionalNumber(fallbackHeatmap.current_streak);
+
   return {
-    longestStreak: asNumber(highlights.longest_streak),
-    currentStreak: asNumber(highlights.current_streak),
-    activeDays: asNumber(asObject(D.profile).active_days),
-    totalDays: Object.keys(heatmap).length,
-    heatmap,
+    longestStreak: rawLongestStreak ?? derivedStreaks.longestStreak,
+    currentStreak: rawCurrentStreak ?? derivedStreaks.currentStreak,
+    activeDays:
+      explicitActiveDays ??
+      rawActiveDays ??
+      derivedStreaks.activeDays,
+    totalDays:
+      rawTotalDays ??
+      (Object.keys(resolvedHeatmap).length > 0
+        ? Object.keys(resolvedHeatmap).length
+        : explicitActiveDays ?? rawActiveDays ?? derivedStreaks.activeDays),
+    heatmap: resolvedHeatmap,
   };
 }
 
@@ -1411,6 +1557,12 @@ export async function loadPublicBuilderBioRecap(username: string) {
   })).filter((item) => item.href);
   const favoritePrompt = asString(asObject(D.highlights).favorite_prompt);
   const high = asObject(D.highlights);
+  const rawBusiestDay = asObject(high.busiest_day);
+  const resolvedBusiestDay = hasMeaningfulBusiestDay(rawBusiestDay)
+    ? rawBusiestDay
+    : {};
+  const resolvedLongestStreak =
+    asOptionalNumber(high.longest_streak) ?? activity.longestStreak;
   const signatureThread = deriveSignatureThread(contentLang, profile, D, E);
   const recurringThreads = deriveRecurringThreads(contentLang, profile, D, E);
   const conversationRoles = deriveConversationRoles(contentLang, comparison);
@@ -1545,15 +1697,26 @@ export async function loadPublicBuilderBioRecap(username: string) {
       partial: tokenCoverage.partial,
       facts: [
         { label: inLang(contentLang, "最大会话", "Biggest session"), value: `${formatNumber(asNumber(asObject(high.biggest_session).turns))} turns` },
-        {
-          label: inLang(contentLang, "最忙的一天", "Busiest day"),
-          value: inLang(
-            contentLang,
-            `${asNumber(asObject(high.busiest_day).sessions)} 个 sessions · ${formatCompact(asNumber(asObject(high.busiest_day).turns))} turns`,
-            `${asNumber(asObject(high.busiest_day).sessions)} sessions · ${formatCompact(asNumber(asObject(high.busiest_day).turns))} turns`
-          ),
-        },
-        { label: inLang(contentLang, "最长连续天数", "Longest streak"), value: inLang(contentLang, `${formatNumber(asNumber(high.longest_streak))} 天`, `${formatNumber(asNumber(high.longest_streak))} days`) },
+        hasMeaningfulBusiestDay(resolvedBusiestDay)
+          ? {
+              label: inLang(contentLang, "最忙的一天", "Busiest day"),
+              value: inLang(
+                contentLang,
+                `${asNumber(resolvedBusiestDay.sessions)} 个 sessions · ${formatCompact(asNumber(resolvedBusiestDay.turns))} turns`,
+                `${asNumber(resolvedBusiestDay.sessions)} sessions · ${formatCompact(asNumber(resolvedBusiestDay.turns))} turns`
+              ),
+            }
+          : null,
+        resolvedLongestStreak > 0
+          ? {
+              label: inLang(contentLang, "最长连续天数", "Longest streak"),
+              value: inLang(
+                contentLang,
+                `${formatNumber(resolvedLongestStreak)} 天`,
+                `${formatNumber(resolvedLongestStreak)} days`
+              ),
+            }
+          : null,
         tokenCoverage.partial
           ? {
               label: inLang(contentLang, "Token 口径", "Token scope"),
@@ -1572,11 +1735,11 @@ export async function loadPublicBuilderBioRecap(username: string) {
           inLang(contentLang, "这是整个周期里最深的一次单线程推进。", "This was the deepest single-thread push in the whole cycle."),
       },
       busiestDay: {
-        date: asString(asObject(high.busiest_day).date),
-        sessions: asNumber(asObject(high.busiest_day).sessions),
-        turns: asNumber(asObject(high.busiest_day).turns),
+        date: asString(resolvedBusiestDay.date),
+        sessions: asNumber(resolvedBusiestDay.sessions),
+        turns: asNumber(resolvedBusiestDay.turns),
       },
-      longestStreak: asNumber(high.longest_streak),
+      longestStreak: resolvedLongestStreak,
       favoritePrompt,
     },
     conversation: {
