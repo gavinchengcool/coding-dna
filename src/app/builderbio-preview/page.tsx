@@ -797,6 +797,78 @@ export default async function BuilderBioPreviewPage() {
                 <h2 className="max-w-4xl text-[2rem] font-black leading-[1.06] text-text-primary sm:leading-[0.98] sm:text-6xl">
                   {preview.thesis}
                 </h2>
+                <div className="mt-5 flex flex-wrap items-center gap-2 text-[11px] text-text-secondary sm:mt-6 sm:gap-3 sm:text-xs">
+                  {preview.agents.map((agent) => (
+                    <span
+                      key={agent.name}
+                      className="inline-flex items-center gap-2 rounded-full border border-border px-2.5 py-1.5 sm:px-3"
+                    >
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: agent.color }} />
+                      <span className="text-text-primary">{agent.name}</span>
+                      <span className="text-text-muted">{agent.role}</span>
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2 sm:mt-5">
+                  {preview.tasteSignals.map((signal) => (
+                    <span
+                      key={signal}
+                      className="rounded-full border border-accent/20 bg-accent/10 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-primary sm:px-3 sm:text-[11px]"
+                    >
+                      {signal}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-5 space-y-3 lg:hidden">
+                  <div className="rounded-3xl border border-accent/25 bg-[linear-gradient(135deg,rgba(255,107,53,0.12),rgba(255,107,53,0.03))] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent">
+                          {preview.socialCurrency.title}
+                        </p>
+                        <div className="mt-2 text-4xl font-black leading-none text-text-primary">
+                          {formatCompact(preview.totalTokens)}
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-text-primary/90">{ui.tokenLabel}</p>
+                      </div>
+                      <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-accent">
+                        {pageCopy.socialCurrencyBadge}
+                      </span>
+                    </div>
+                    <p className="mt-4 text-sm leading-6 text-text-secondary">
+                      {pageCopy.socialCurrencySummary}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {preview.stats.map((stat) => (
+                      <div
+                        key={`mobile-${stat.label}`}
+                        className="rounded-2xl border border-border bg-bg-primary/55 p-4"
+                      >
+                        <div className="text-2xl font-black text-accent">{stat.value}</div>
+                        <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-text-muted">
+                          {stat.label}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="rounded-3xl border border-border bg-bg-primary/55 p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent">
+                      {preview.managementStyle.label}
+                    </p>
+                    <h3 className="mt-2 text-xl font-black text-text-primary">
+                      {preview.managementStyle.name}
+                    </h3>
+                    <p className="mt-3 text-sm leading-6 text-text-secondary">
+                      {preview.managementStyle.summary}
+                    </p>
+                  </div>
+                </div>
+
                 <p className="mt-5 max-w-3xl text-sm leading-7 text-text-secondary sm:text-base">
                   {pageCopy.recap}
                 </p>
@@ -818,32 +890,9 @@ export default async function BuilderBioPreviewPage() {
                   ))}
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-2 sm:mt-6">
-                  {preview.tasteSignals.map((signal) => (
-                    <span
-                      key={signal}
-                      className="rounded-full border border-accent/20 bg-accent/10 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-primary sm:px-3 sm:text-[11px]"
-                    >
-                      {signal}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-5 flex flex-wrap items-center gap-2 text-[11px] text-text-secondary sm:mt-6 sm:gap-3 sm:text-xs">
-                  {preview.agents.map((agent) => (
-                    <span
-                      key={agent.name}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-2.5 py-1.5 sm:px-3"
-                    >
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: agent.color }} />
-                      <span className="text-text-primary">{agent.name}</span>
-                      <span className="text-text-muted">{agent.role}</span>
-                    </span>
-                  ))}
-                </div>
               </div>
 
-              <div className="grid gap-4">
+              <div className="hidden gap-4 lg:grid">
                 <div className="rounded-3xl border border-border bg-bg-primary/55 p-4 sm:p-5">
                   <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent">
                     {preview.managementStyle.label}

@@ -22,21 +22,21 @@ export default function Titlebar({
       <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-3 sm:px-4">
         <a
           href="https://builderbio.dev"
-          className={`flex items-center font-bold text-xs tracking-wide transition-colors sm:text-sm ${isHome ? "text-accent" : "text-text-secondary hover:text-accent"}`}
+          className={`flex items-center rounded-full px-1.5 py-1 font-bold text-xs tracking-wide transition-colors sm:text-sm ${isHome ? "text-accent" : "text-text-secondary hover:text-accent"}`}
         >
           ~/builderbio
         </a>
-        <nav className="flex items-center gap-2 text-[10px] text-text-secondary sm:gap-4 sm:text-xs">
+        <nav className="flex items-center gap-3 text-[10px] text-text-secondary sm:gap-4 sm:text-xs">
           <a
             href="https://builderbio.dev/taste-board"
-            className={isTasteBoard ? "text-accent" : "hover:text-accent transition-colors"}
+            className={`rounded-full px-1.5 py-1 transition-colors ${isTasteBoard ? "text-accent" : "hover:text-accent"}`}
           >
             /taste-board
           </a>
           <span className="hidden text-text-muted sm:inline">·</span>
           <a
             href="https://gavin.builderbio.dev"
-            className={isBuiltBy ? "text-accent" : "hover:text-accent transition-colors"}
+            className={`rounded-full px-1.5 py-1 transition-colors ${isBuiltBy ? "text-accent" : "hover:text-accent"}`}
           >
             /built-by
           </a>
