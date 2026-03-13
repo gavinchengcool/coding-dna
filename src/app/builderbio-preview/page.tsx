@@ -338,6 +338,7 @@ const previewFallback = {
   },
   whenIbuild: {
     builderType: "晨间型 Builder",
+    peakLead: "10 AM",
     peakHour: "10 AM",
     peakWindow: "9–11 AM",
     peakWindowSessions: 69,
@@ -765,8 +766,8 @@ function buildPageCopy(preview: typeof previewFallback, liveProfile: boolean) {
     evidenceSummary:
       preview.evidence.coverage.summary ||
       (lang === "zh"
-        ? `从 ${preview.whenIbuild.peakHour} 的时间高峰，到 ${busiestDay.date} 的忙碌峰值，再到不同 agent 的使用密度，这些结论都能在原始日志里找到对应证据。`
-        : `From the ${preview.whenIbuild.peakHour} time peak, to the busiest day on ${busiestDay.date}, to the relative density of each agent trace, each conclusion maps back to the raw logs.`),
+        ? `从 ${preview.whenIbuild.peakLead || preview.whenIbuild.peakWindow} 这段时间高峰，到 ${busiestDay.date} 的忙碌峰值，再到不同 agent 的使用密度，这些结论都能在原始日志里找到对应证据。`
+        : `From the ${preview.whenIbuild.peakLead || preview.whenIbuild.peakWindow} time peak, to the busiest day on ${busiestDay.date}, to the relative density of each agent trace, each conclusion maps back to the raw logs.`),
     evidenceNote:
       preview.evidence.coverage.note ||
       (lang === "zh"
@@ -1611,7 +1612,7 @@ function EditorialMakerBuilderPage({
                 ))}
               </div>
               <div className="mt-6 rounded-[24px] border border-border bg-bg-primary/55 p-5">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">Agent split</div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">Agent mix</div>
                 <p className="mt-3 text-sm leading-7 text-text-secondary">{preview.presentation.modeReason}</p>
               </div>
             </div>
@@ -1969,6 +1970,10 @@ export default async function BuilderBioPreviewPage({
   const hourEntries = getHourEntries(preview);
   const maxHourSessions = Math.max(...hourEntries.map((entry) => entry.sessions), 1);
   const heatmapCells = getHeatmapCells(preview);
+  const peakHeadline =
+    preview.whenIbuild.peakLead || preview.whenIbuild.peakHour || preview.whenIbuild.peakWindow;
+  const peakHeadlineIsWindow =
+    peakHeadline === preview.whenIbuild.peakWindow || /[-–]/.test(peakHeadline);
 
   if (chosenMode === "conversation-first") {
     return (
@@ -2802,11 +2807,14 @@ export default async function BuilderBioPreviewPage({
                 </div>
                 <div className="mt-5 rounded-2xl border border-border bg-bg-primary/60 p-4">
                   <div className="text-xl font-black text-text-primary">
-                    {preview.whenIbuild.peakHour} {ui.peakSentence}
+                    {peakHeadlineIsWindow ? peakHeadline : `${peakHeadline} ${ui.peakSentence}`}
                   </div>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    {ui.peakWindowSummary} {preview.whenIbuild.peakWindow}.{" "}
-                    {preview.whenIbuild.peakWindowSessions} {ui.sessionsSuffix}
+                    {peakHeadlineIsWindow
+                      ? lang === "zh"
+                        ? `整个窗口内累计 ${preview.whenIbuild.peakWindowSessions} 个 sessions。`
+                        : `${preview.whenIbuild.peakWindowSessions} sessions inside this window.`
+                      : `${ui.peakWindowSummary} ${preview.whenIbuild.peakWindow}. ${preview.whenIbuild.peakWindowSessions} ${ui.sessionsSuffix}`}
                   </p>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">

@@ -158,6 +158,162 @@ function uniq(values: string[]): string[] {
   return result;
 }
 
+function looksLikeOverclaimedAgentCopy(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  const directMarkers =
+    /主力全栈|运维安全|trae 前端|claude code 探索|承担了不同工作类型|different kinds of work|固定职责|rigid division|assign agents by role|different agents are assigned/.test(
+      normalized
+    );
+  if (directMarkers) return true;
+
+  const agentMentions = (
+    normalized.match(/claude code|claude-code|codex|cursor|trae|antigravity|openclaw|windsurf/g) || []
+  ).length;
+  const specializationMarkers = (
+    normalized.match(/前端|后端|运维|部署|探索|研究|主力|specialty|specialized|frontend|backend|ops|devops|research|role/g) || []
+  ).length;
+
+  return agentMentions >= 2 && specializationMarkers >= 2;
+}
+
+function pickSafeNarrativeHint(...candidates: Array<unknown>): string {
+  for (const candidate of candidates) {
+    const text = asString(candidate);
+    if (text && !looksLikeOverclaimedAgentCopy(text)) {
+      return text;
+    }
+  }
+  return "";
+}
+
+function looksLikePeakHourText(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return /\b\d{1,2}:\d{2}\b/.test(normalized) || normalized.includes("peak hour");
+}
+
+const PERIOD_WINDOW_MAP: Record<string, string> = {
+  deep_night: "00:00-06:00",
+  morning: "06:00-12:00",
+  afternoon: "12:00-18:00",
+  evening: "18:00-24:00",
+};
+
+function getDominantPeriodKey(time: AnyRecord): string {
+  const periods = asObject(time.period_data);
+  const ranked = Object.entries(periods)
+    .map(([key, raw]) => {
+      const stats = asObject(raw);
+      return {
+        key,
+        score: asNumber(stats.turns) * 2 + asNumber(stats.sessions),
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+  return ranked[0]?.score ? ranked[0].key : "";
+}
+
+function getBuilderTypeWindow(time: AnyRecord): string {
+  const builderType = asString(time.builder_type).toLowerCase();
+  if (!builderType) return "";
+  if (builderType.includes("深夜") || builderType.includes("late night")) return PERIOD_WINDOW_MAP.deep_night;
+  if (builderType.includes("上午") || builderType.includes("morning")) return PERIOD_WINDOW_MAP.morning;
+  if (builderType.includes("下午") || builderType.includes("afternoon")) return PERIOD_WINDOW_MAP.afternoon;
+  if (builderType.includes("晚上") || builderType.includes("evening")) return PERIOD_WINDOW_MAP.evening;
+  return "";
+}
+
+function peakHourToWindow(peakHour: number): string {
+  if (peakHour < 6) return PERIOD_WINDOW_MAP.deep_night;
+  if (peakHour < 12) return PERIOD_WINDOW_MAP.morning;
+  if (peakHour < 18) return PERIOD_WINDOW_MAP.afternoon;
+  return PERIOD_WINDOW_MAP.evening;
+}
+
+function windowContainsHour(windowLabel: string, peakHour: number): boolean {
+  const match = windowLabel.match(/^(\d{2}):\d{2}-(\d{2}):\d{2}$/);
+  if (!match) return false;
+  const start = Number(match[1]);
+  const end = Number(match[2]);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
+  return peakHour >= start && peakHour < end;
+}
+
+function hasPeakSignal(time: AnyRecord): boolean {
+  return Boolean(
+    asString(time.peak_window) ||
+      asString(time.peak_text) ||
+      asString(time.builder_type) ||
+      Object.keys(asObject(time.period_data)).length ||
+      Object.keys(asObject(time.hour_distribution)).length ||
+      asNumber(time.peak_hour) > 0
+  );
+}
+
+function derivePeakWindowLabel(lang: CopyLang, time: AnyRecord): string {
+  const explicit = asString(time.peak_window);
+  if (explicit) return explicit;
+
+  const dominantPeriod = getDominantPeriodKey(time);
+  if (dominantPeriod && PERIOD_WINDOW_MAP[dominantPeriod]) {
+    return PERIOD_WINDOW_MAP[dominantPeriod];
+  }
+
+  const builderTypeWindow = getBuilderTypeWindow(time);
+  if (builderTypeWindow) return builderTypeWindow;
+
+  const peakHour = asNumber(time.peak_hour);
+  if (peakHour !== null && peakHour >= 0) {
+    return peakHourToWindow(peakHour);
+  }
+
+  const peakText = asString(time.peak_text);
+  if (peakText && !looksLikePeakHourText(peakText)) return peakText;
+  return inLang(lang, "高峰时段", "Peak window");
+}
+
+function derivePeakDetail(lang: CopyLang, time: AnyRecord): string {
+  const peakHour = asNumber(time.peak_hour);
+  const builderType = asString(time.builder_type);
+  const peakWindow = derivePeakWindowLabel(lang, time);
+  const reliablePoint = peakHour >= 0 && windowContainsHour(peakWindow, peakHour);
+
+  if (reliablePoint) {
+    return builderType
+      ? inLang(
+          lang,
+          `整体最稳定的窗口落在 ${peakWindow}，最密集的单点大约在 ${peakHour}:00，整体节奏更接近 ${builderType}。`,
+          `The steadiest window lands in ${peakWindow}, with the single densest point around ${peakHour}:00. Overall the rhythm reads closer to ${builderType}.`
+        )
+      : inLang(
+          lang,
+          `整体最稳定的窗口落在 ${peakWindow}，最密集的单点大约在 ${peakHour}:00。`,
+          `The steadiest window lands in ${peakWindow}, with the single densest point around ${peakHour}:00.`
+        );
+  }
+
+  if (builderType) {
+    return inLang(
+      lang,
+      `整体最稳定的窗口落在 ${peakWindow}，从整段周期看更接近 ${builderType}。`,
+      `The steadiest window lands in ${peakWindow}, and the overall rhythm reads closer to ${builderType}.`
+    );
+  }
+
+  if (peakWindow && peakWindow !== inLang(lang, "高峰时段", "Peak window")) {
+    return inLang(
+      lang,
+      `整体最稳定的工作窗口落在 ${peakWindow}。`,
+      `The steadiest stretch of work lands in ${peakWindow}.`
+    );
+  }
+
+  return (
+    asString(time.peak_detail) ||
+    inLang(lang, "一天里最稳定的高能时段会反复出现在这里。", "The most reliable high-energy stretch of the day keeps appearing here.")
+  );
+}
+
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }
@@ -311,10 +467,11 @@ async function computeVerificationHash(D: AnyRecord): Promise<string> {
 
 function deriveTasteSignals(profile: AnyRecord, D: AnyRecord, E: AnyRecord): string[] {
   const style = asObject(D.style);
+  const time = asObject(E.time);
   const techEntries = Object.entries(asObject(E.tech)).sort((a, b) => asNumber(b[1]) - asNumber(a[1]));
   const signals = [
     asString(style.style_label),
-    asString(asObject(E.time).peak_text),
+    asString(time.builder_type) || asString(time.peak_window),
     ...techEntries.slice(0, 2).map(([label]) => humanizeTag(label)),
   ];
 
@@ -410,9 +567,7 @@ function deriveManagementStyle(lang: CopyLang, D: AnyRecord, E: AnyRecord, profi
   const rhythm = asString(style.rhythm_label || style.session_rhythm);
   const label = [prompt, rhythm].filter(Boolean).join(" × ") || asString(style.style_label) || "Builder operating model";
   const summary =
-    asString(style.style_sub) ||
-    asString(E.comparison_insight) ||
-    asString(E.evolution_insight) ||
+    pickSafeNarrativeHint(style.style_sub, E.comparison_insight, E.evolution_insight) ||
     deriveBuilderThesis(
       lang,
       asString(profile.display_name || profile.username || inLang(lang, "这位 Builder", "this builder")),
@@ -455,8 +610,7 @@ function deriveHowIbuild(lang: CopyLang, D: AnyRecord, E: AnyRecord, profile: An
   return {
     archetype: asString(style.style_label) || "稳定推进型",
     summary:
-      asString(style.style_sub) ||
-      asString(E.comparison_insight) ||
+      pickSafeNarrativeHint(style.style_sub, E.comparison_insight) ||
       inLang(lang, "会在高频推进和长上下文推进之间切换，多个 agent 经常被放进同一条工作流里。", "They move between fast iteration and longer-context sessions, and several agents keep showing up inside the same overall workflow."),
     promptStyle: asString(style.prompt_type_label || style.prompt_type) || inLang(lang, "直接指令", "Direct instruction"),
     promptDetail: asString(style.prompt_type_desc) || inLang(lang, "更偏向直接给出任务和约束，而不是写很长的需求文档。", "They prefer giving direct tasks and constraints instead of writing long requirement docs."),
@@ -469,8 +623,7 @@ function deriveHowIbuild(lang: CopyLang, D: AnyRecord, E: AnyRecord, profile: An
         ? inLang(lang, "多 Agent 协作", "Multi-agent collaboration")
         : inLang(lang, "单 Agent 深挖", "Single-agent depth"),
     agentDetail:
-      asString(style.loyalty_desc) ||
-      asString(E.comparison_insight) ||
+      pickSafeNarrativeHint(style.loyalty_desc, E.comparison_insight) ||
       inLang(lang, "不同 agent 的会话形态和密度有差异，但不代表它们只负责完全不同的任务。", "The agents show different session shapes and densities, but that does not automatically mean each one owns a completely separate job."),
     toolTotals,
   };
@@ -561,6 +714,8 @@ function deriveSignatureMoves(lang: CopyLang, D: AnyRecord, E: AnyRecord, profil
   const commandRatio = Math.round(asNumber(style.command_ratio) * 100);
   const projects = asArray<AnyRecord>(D.projects);
   const signature = projects.slice().sort((a, b) => projectScore(b) - projectScore(a))[0];
+  const time = asObject(E.time);
+  const peakWindow = derivePeakWindowLabel(lang, time);
   const topTech = Object.entries(asObject(E.tech))
     .sort((a, b) => asNumber(b[1]) - asNumber(a[1]))
     .slice(0, 3)
@@ -606,13 +761,13 @@ function deriveSignatureMoves(lang: CopyLang, D: AnyRecord, E: AnyRecord, profil
           ),
         }
       : null,
-    asString(asObject(E.time).peak_text)
+    hasPeakSignal(time)
       ? {
           title: inLang(lang, "有很明显的工作节奏", "Show a clear working rhythm"),
           summary: inLang(
             lang,
-            `${asString(asObject(E.time).peak_text)} 不是偶然出现，而是整个周期里反复出现的工作高峰。`,
-            `${asString(asObject(E.time).peak_text)} is not a one-off spike; it keeps returning as the recurring high-energy window.`
+            `${peakWindow} 这一段不是偶然出现，而是整个周期里反复回来的高能窗口。`,
+            `${peakWindow} is not a one-off spike; it keeps returning as the recurring high-energy window.`
           ),
         }
       : null,
@@ -625,6 +780,8 @@ function deriveHighMoments(lang: CopyLang, D: AnyRecord, E: AnyRecord): HighMome
   const highlights = asObject(D.highlights);
   const evolution = asArray<AnyRecord>(E.evolution);
   const time = asObject(E.time);
+  const peakWindow = derivePeakWindowLabel(lang, time);
+  const peakDetail = derivePeakDetail(lang, time);
   const peakWeek = evolution.slice().sort((a, b) => asNumber(b.turns) - asNumber(a.turns))[0];
   const biggestSession = asObject(highlights.biggest_session);
   const busiestDay = asObject(highlights.busiest_day);
@@ -652,19 +809,11 @@ function deriveHighMoments(lang: CopyLang, D: AnyRecord, E: AnyRecord): HighMome
           ),
         }
       : null,
-    asString(time.peak_text)
+    hasPeakSignal(time)
       ? {
           label: inLang(lang, "高峰时段", "Peak window"),
-          value: asString(time.peak_window) || asString(time.peak_text),
-          detail:
-            asNumber(time.peak_hour) > 0
-              ? inLang(
-                  lang,
-                  `最稳定的活跃窗口落在 ${asString(time.peak_window) || asString(time.peak_text)}，最密集的单点大约在 ${asNumber(time.peak_hour)}:00。`,
-                  `The most stable activity window lands in ${asString(time.peak_window) || asString(time.peak_text)}, with the single densest point around ${asNumber(time.peak_hour)}:00.`
-                )
-              : asString(time.peak_detail) ||
-                inLang(lang, "一天里最稳定的高能时段会反复出现在这里。", "The most reliable high-energy stretch of the day keeps appearing here."),
+          value: peakWindow,
+          detail: peakDetail,
         }
       : biggestSession
         ? {
@@ -688,7 +837,7 @@ function deriveSignatureThread(
   const time = asObject(E.time);
   const totalTurns = asNumber(profile.total_turns);
   const activeDays = asNumber(profile.active_days);
-  const peakWindow = asString(time.peak_window) || asString(time.peak_text);
+  const peakWindow = derivePeakWindowLabel(lang, time);
   const lowerPrompt = favoritePrompt.toLowerCase();
 
   let name = inLang(lang, "反复回来的问题线程", "Recurring question thread");
@@ -951,10 +1100,8 @@ function deriveEvidence(
     receipts: [
       {
         label: inLang(lang, "高峰时段", "Peak window"),
-        value: asString(time.peak_text) || "未标注",
-        detail:
-          asString(time.peak_detail) ||
-          inLang(lang, "时间分布显示出稳定的工作节奏。", "The time distribution shows a stable work rhythm."),
+        value: derivePeakWindowLabel(lang, time) || "未标注",
+        detail: derivePeakDetail(lang, time),
       },
       {
         label: inLang(lang, "第一工具", "Top tool"),
@@ -987,6 +1134,9 @@ function deriveWhenIbuild(lang: CopyLang, E: AnyRecord) {
   const time = asObject(E.time);
   const distribution = asObject(time.hour_distribution);
   const periods = asObject(time.period_data);
+  const peakWindow = derivePeakWindowLabel(lang, time);
+  const peakHourValue = asNumber(time.peak_hour);
+  const peakPointReliable = peakHourValue >= 0 && windowContainsHour(peakWindow, peakHourValue);
   const periodLabels: Record<string, string> =
     lang === "zh"
       ? {
@@ -1003,12 +1153,15 @@ function deriveWhenIbuild(lang: CopyLang, E: AnyRecord) {
         };
 
   return {
-    builderType: asString(time.builder_type) || asString(time.peak_text) || inLang(lang, "活跃时间型 Builder", "Time-pattern builder"),
+    builderType: asString(time.builder_type) || inLang(lang, "活跃时间型 Builder", "Time-pattern builder"),
+    peakLead: peakPointReliable
+      ? `${peakHourValue}:00`
+      : peakWindow,
     peakHour:
-      asNumber(time.peak_hour) > 0
-        ? `${asNumber(time.peak_hour)}:00`
-        : asString(time.peak_text) || inLang(lang, "未标注", "Unspecified"),
-    peakWindow: asString(time.peak_window) || asString(time.peak_text) || inLang(lang, "高峰时段", "Peak window"),
+      peakPointReliable
+        ? `${peakHourValue}:00`
+        : inLang(lang, "未标注", "Unspecified"),
+    peakWindow,
     peakWindowSessions: Math.max(...Object.values(distribution).map((value) => asNumber(value)), 0),
     hourDistribution: Object.fromEntries(
       Array.from({ length: 24 }, (_, hour) => [hour, asNumber(distribution[String(hour)])])
