@@ -1,6 +1,6 @@
 ---
 name: builderbio
-version: 0.8.1
+version: 0.8.2
 description: |
   Use this skill when the user wants a BuilderBio, builder recap, builder profile, AI build history, annual-review style coding recap, or a shareable page about how they build with AI agents. It scans local coding-agent logs across Claude Code, Codex, Trae, Cursor, OpenClaw, Antigravity, Gemini-hosted Antigravity fallbacks, Kiro, Windsurf, and other discovered sources; produces a scan audit; derives evidence-backed builder narratives; and publishes a shareable BuilderBio.
 allowed-tools:
@@ -224,6 +224,10 @@ Carry through:
 - `D.profile.style_theme`
 - `D.profile.style_theme_reason`
 - `D.profile.theme_candidates`
+
+Do not rely on server-side backfill for these presentation fields.
+
+The local scan-and-publish flow should emit them directly so the first published page already carries the correct mode/theme contract.
 - per-session provenance fields such as `source_refs`, `parse_mode`, `partial_reasons`
 - stable top-line counts required for verification hashes
 

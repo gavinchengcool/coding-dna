@@ -32,7 +32,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 
-SCANNER_VERSION = "0.8.1"
+SCANNER_VERSION = "0.8.2"
 MAX_AUDIT_ITEMS = 25
 WEAK_SCAN_LIMIT = 400
 COMMON_DISCOVERY_ROOTS = [

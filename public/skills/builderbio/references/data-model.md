@@ -20,7 +20,7 @@ Primary parser output:
 
 ```json
 {
-  "scanner_version": "0.8.1",
+  "scanner_version": "0.8.2",
   "scan_audit": {
     "summary": {
       "status": "partial",
@@ -312,7 +312,7 @@ Semantics:
     "total_turns": 12711,
     "total_tool_calls": 8800,
     "total_tokens": 9990000000,
-  "scanner_version": "0.8.1",
+  "scanner_version": "0.8.2",
     "scan_status": "partial",
     "scan_recommendation": "Re-run BuilderBio if you recently used an unsupported editor-hosted agent.",
     "generated_at": "2026-03-10",

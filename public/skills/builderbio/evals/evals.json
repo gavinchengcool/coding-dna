@@ -1,6 +1,6 @@
 {
   "skill_name": "builderbio",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "benchmark_axes": {
     "coverage": "Discover strong-path logs plus weak-path candidates, never silently dropping unknown sources.",
     "truth": "Produce evidence-backed facts and carry scan transparency through publish.",
