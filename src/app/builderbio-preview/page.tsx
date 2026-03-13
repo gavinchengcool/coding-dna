@@ -918,52 +918,6 @@ function ThemeCtaBlock({
   );
 }
 
-function MiniHeatmap({ preview }: { preview: PreviewData }) {
-  const heatmapCells = getHeatmapCells(preview);
-  const hasHeatmap = hasRenderableHeatmapCells(heatmapCells);
-
-  return (
-    hasHeatmap ? (
-      <div className="grid grid-cols-7 gap-1.5">
-        {heatmapCells.map((cell) => (
-          <div
-            key={cell.key}
-            className={`aspect-square rounded-[6px] border border-border/60 ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
-            title={cell.date || undefined}
-          />
-        ))}
-      </div>
-    ) : (
-      <div className="rounded-2xl border border-border bg-bg-primary/55 px-4 py-4 text-sm text-text-secondary">
-        {preview.lang === "zh"
-          ? "日级活跃热力图在这份数据里不可用。"
-          : "Day-level activity heatmap is unavailable in this payload."}
-      </div>
-    )
-  );
-}
-
-function RhythmBars({ preview }: { preview: PreviewData }) {
-  const hourEntries = getHourEntries(preview);
-  const maxHourSessions = Math.max(...hourEntries.map((entry) => entry.sessions), 1);
-
-  return (
-    <div className="flex h-28 items-end gap-2">
-      {hourEntries.map((entry) => (
-        <div key={entry.hour} className="flex-1">
-          <div
-            className="rounded-t-[6px] bg-accent"
-            style={{
-              height: `${Math.max(8, (entry.sessions / maxHourSessions) * 100)}%`,
-              opacity: 0.25 + (entry.sessions / maxHourSessions) * 0.75,
-            }}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 type CorePackSection =
   | "collaboration"
   | "high-moments"
@@ -1338,6 +1292,452 @@ function BuilderCorePack({
           ) : null}
         </section>
       ) : null}
+    </>
+  );
+}
+
+function BuilderSharedStoryPack({
+  preview,
+  liveProfile,
+  tone,
+}: {
+  preview: PreviewData;
+  liveProfile: boolean;
+  tone: "light" | "dark";
+}) {
+  const lang = preview.lang === "en" ? "en" : "zh";
+  const ui = getUiCopy(lang);
+  const pageCopy = buildPageCopy(preview, liveProfile);
+  const sectionClass =
+    tone === "dark"
+      ? "rounded-[32px] border border-white/10 bg-black/15 p-5 text-white sm:p-8"
+      : "rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8";
+  const cardClass =
+    tone === "dark"
+      ? "rounded-2xl border border-white/10 bg-black/10 p-4"
+      : "rounded-2xl border border-border bg-bg-primary/60 p-4";
+  const mutedClass = tone === "dark" ? "text-white/45" : "text-text-muted";
+  const titleClass = tone === "dark" ? "text-white" : "text-text-primary";
+  const textClass = tone === "dark" ? "text-white/72" : "text-text-secondary";
+  const strongTextClass = tone === "dark" ? "text-white/88" : "text-text-primary/90";
+  const accentChipClass =
+    tone === "dark"
+      ? "rounded-full border border-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-white/55"
+      : "rounded-full border border-accent/25 bg-accent/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-accent";
+
+  return (
+    <>
+      <section className="mb-8 grid gap-5 lg:grid-cols-[1.08fr_0.92fr] sm:mb-10 sm:gap-6">
+        <div className={sectionClass}>
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <span className={accentChipClass}>{preview.signatureBuild.stage}</span>
+            <span className={`text-xs uppercase tracking-[0.2em] ${mutedClass}`}>
+              {ui.signatureHeading}
+            </span>
+          </div>
+
+          <h2 className={`text-3xl font-black sm:text-4xl ${titleClass}`}>
+            {preview.signatureBuild.name}
+          </h2>
+          <p className={`mt-4 max-w-2xl text-sm leading-7 sm:text-base ${textClass}`}>
+            {preview.signatureBuild.summary}
+          </p>
+          <p className={`mt-4 max-w-2xl text-sm leading-7 ${strongTextClass}`}>
+            {preview.signatureBuild.why}
+          </p>
+
+          <div className={`mt-6 rounded-2xl ${cardClass}`}>
+            <p className={`mb-3 text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+              {ui.signatureWhy}
+            </p>
+            <div className="space-y-3">
+              {preview.signatureBuild.proof.map((item) => (
+                <div key={item} className={`flex gap-3 text-sm ${textClass}`}>
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className={sectionClass}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+            High moments
+          </p>
+          <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+            {pageCopy.highMomentsHeading}
+          </h2>
+
+          <div className="mt-6 space-y-4">
+            {preview.highMoments.map((moment) => (
+              <div key={moment.label} className={cardClass}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className={`text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                    {moment.label}
+                  </div>
+                  <div className="text-sm font-bold text-accent">{moment.value}</div>
+                </div>
+                <p className={`mt-3 text-sm leading-6 ${textClass}`}>{moment.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-8 grid gap-5 lg:grid-cols-[0.92fr_1.08fr] sm:mb-10 sm:gap-6">
+        <div className={sectionClass}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+            Signature moves
+          </p>
+          <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+            {pageCopy.signatureMovesHeading}
+          </h2>
+
+          <div className="mt-6 space-y-4">
+            {preview.signatureMoves.map((move) => (
+              <div key={move.title} className={cardClass}>
+                <div className={`text-lg font-black ${titleClass}`}>{move.title}</div>
+                <p className={`mt-2 text-sm leading-6 ${textClass}`}>{move.summary}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={sectionClass}>
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+                What actually got built
+              </p>
+              <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+                {pageCopy.projectsHeading}
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {preview.projects.map((project) => (
+              <div key={project.name} className={`${cardClass} transition-transform hover:-translate-y-0.5`}>
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className={`text-lg font-black ${titleClass}`}>{project.name}</h3>
+                    <p className={`mt-1 text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                      {project.proof}
+                    </p>
+                  </div>
+                  <span className={accentChipClass}>{project.status}</span>
+                </div>
+                <p className={`text-sm leading-6 ${textClass}`}>{project.summary}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {project.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className={`rounded-full border px-2.5 py-1 text-[10px] ${
+                        tone === "dark" ? "border-white/10 text-white/55" : "border-border text-text-secondary"
+                      }`}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-8 grid gap-5 lg:grid-cols-[0.92fr_1.08fr] sm:mb-10 sm:gap-6">
+        <div className={sectionClass}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+            How I Build
+          </p>
+          <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+            {preview.howIbuild.archetype}
+          </h2>
+          <p className={`mt-4 text-sm leading-6 ${textClass}`}>{preview.howIbuild.summary}</p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className={cardClass}>
+              <div className={`text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                {ui.promptStyle}
+              </div>
+              <div className={`mt-2 text-lg font-black ${titleClass}`}>
+                {preview.howIbuild.promptStyle}
+              </div>
+              <p className={`mt-2 text-xs leading-5 ${textClass}`}>{preview.howIbuild.promptDetail}</p>
+            </div>
+            <div className={cardClass}>
+              <div className={`text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                {ui.sessionRhythm}
+              </div>
+              <div className={`mt-2 text-lg font-black ${titleClass}`}>
+                {preview.howIbuild.sessionRhythm}
+              </div>
+              <p className={`mt-2 text-xs leading-5 ${textClass}`}>{preview.howIbuild.sessionDetail}</p>
+            </div>
+            <div className={cardClass}>
+              <div className={`text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                {ui.toolPreference}
+              </div>
+              <div className={`mt-2 text-lg font-black ${titleClass}`}>
+                {preview.howIbuild.toolPreference}
+              </div>
+              <p className={`mt-2 text-xs leading-5 ${textClass}`}>{preview.howIbuild.toolDetail}</p>
+            </div>
+            <div className={cardClass}>
+              <div className={`text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                {ui.agentLoyalty}
+              </div>
+              <div className={`mt-2 text-lg font-black ${titleClass}`}>
+                {preview.howIbuild.agentLoyalty}
+              </div>
+              <p className={`mt-2 text-xs leading-5 ${textClass}`}>{preview.howIbuild.agentDetail}</p>
+            </div>
+          </div>
+
+          <div className={`mt-6 rounded-2xl ${cardClass}`}>
+            <div className={`mb-3 text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+              {ui.toolDistribution}
+            </div>
+            <div className={`flex h-4 overflow-hidden rounded-full ${tone === "dark" ? "bg-black/15" : "bg-bg-primary"}`}>
+              {preview.howIbuild.toolTotals.map((tool) => {
+                const total = preview.howIbuild.toolTotals.reduce((sum, item) => sum + item.count, 0);
+                return (
+                  <div
+                    key={tool.label}
+                    style={{
+                      width: `${total > 0 ? (tool.count / total) * 100 : 0}%`,
+                      backgroundColor: tool.color,
+                    }}
+                    title={`${tool.label}: ${tool.count}`}
+                  />
+                );
+              })}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {preview.howIbuild.toolTotals.map((tool) => (
+                <span
+                  key={tool.label}
+                  className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] ${
+                    tone === "dark" ? "border-white/10 text-white/72" : "border-border text-text-secondary"
+                  }`}
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tool.color }} />
+                  <span>
+                    {tool.label} {formatNumber(tool.count)}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {preview.comparison.length > 0 ? (
+          <div className={sectionClass}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+              Agent Comparison
+            </p>
+            <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+              {pageCopy.agentComparisonHeading}
+            </h2>
+            <div className="mt-6 grid gap-4">
+              {preview.comparison.map((agent) => {
+                const maxTool = Math.max(...agent.topTools.map((tool) => tool.count), 1);
+                return (
+                  <div key={agent.name} className={cardClass}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: agent.color }} />
+                        <div className={`text-lg font-black ${titleClass}`}>{agent.name}</div>
+                      </div>
+                      <span
+                        className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.16em] ${
+                          tone === "dark" ? "border-white/10 text-white/45" : "border-border text-text-muted"
+                        }`}
+                      >
+                        {agent.distribution}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {[
+                        { label: ui.sessions, value: `${agent.sessions}` },
+                        { label: ui.turns, value: formatNumber(agent.totalTurns) },
+                        { label: ui.avgTurns, value: `${agent.avgTurns}` },
+                        { label: ui.toolCalls, value: formatNumber(agent.totalToolCalls) },
+                      ].map((metric) => (
+                        <div
+                          key={`${agent.name}-${metric.label}`}
+                          className={`rounded-xl border px-3 py-3 text-center ${
+                            tone === "dark" ? "border-white/10 bg-black/10" : "border-border bg-bg-secondary"
+                          }`}
+                        >
+                          <div className={`text-xl font-black ${titleClass}`}>{metric.value}</div>
+                          <div className={`mt-1 text-[10px] uppercase tracking-[0.16em] ${mutedClass}`}>
+                            {metric.label}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {agent.topTools.map((tool) => (
+                        <div key={`${agent.name}-${tool.label}`}>
+                          <div className={`mb-1 flex items-center justify-between gap-3 text-xs ${textClass}`}>
+                            <span>{tool.label}</span>
+                            <span>{formatNumber(tool.count)}</span>
+                          </div>
+                          <div className={`h-2 rounded-full ${tone === "dark" ? "bg-black/15" : "bg-bg-secondary"}`}>
+                            <div
+                              className="h-2 rounded-full"
+                              style={{
+                                width: `${Math.round((tool.count / maxTool) * 100)}%`,
+                                backgroundColor: tool.color,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <section className={`mb-8 sm:mb-10 ${sectionClass}`}>
+        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+          Agent roles
+        </p>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+          <h2 className={`text-2xl font-black sm:text-3xl ${titleClass}`}>
+            {pageCopy.agentRolesHeading}
+          </h2>
+          <p className={`max-w-xl text-sm leading-6 ${textClass}`}>
+            {pageCopy.agentRolesSummary}
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {preview.agentRoles.map((agent) => (
+            <div key={agent.name} className={cardClass}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className={`text-lg font-black ${titleClass}`}>{agent.name}</h3>
+                  <p className="mt-1 text-xs uppercase tracking-[0.18em] text-accent">
+                    {agent.role}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.16em] ${
+                    tone === "dark" ? "border-white/10 text-white/45" : "border-border text-text-muted"
+                  }`}
+                >
+                  {ui.roleLens}
+                </span>
+              </div>
+              <p className={`mt-3 text-sm leading-6 ${textClass}`}>{agent.summary}</p>
+              <div
+                className={`mt-3 rounded-xl border px-3 py-2 text-xs ${
+                  tone === "dark" ? "border-white/10 bg-black/10 text-white/88" : "border-border bg-bg-secondary text-text-primary"
+                }`}
+              >
+                {agent.evidence}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mb-8 grid gap-5 lg:grid-cols-[1.05fr_0.95fr] sm:mb-10 sm:gap-6">
+        <div className={sectionClass}>
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+                Builder eras
+              </p>
+              <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+                {pageCopy.erasHeading}
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {preview.eras.map((era) => (
+              <div key={era.title} className={`${cardClass} p-5`}>
+                <div className="flex flex-col gap-4">
+                  <div className="min-w-0">
+                    <h3 className={`text-xl font-black ${titleClass}`}>{era.title}</h3>
+                    <p className={`mt-1 text-xs uppercase tracking-[0.18em] ${mutedClass}`}>
+                      {era.period}
+                    </p>
+                  </div>
+                  <div
+                    className={`flex h-14 items-end gap-1 self-start rounded-xl border px-3 py-2 ${
+                      tone === "dark" ? "border-white/10 bg-black/10" : "border-border bg-bg-secondary"
+                    }`}
+                  >
+                    {era.bars.map((bar, index) => (
+                      <span
+                        key={`${era.title}-${index}`}
+                        className="w-2.5 rounded-t bg-accent"
+                        style={{ height: pct(bar) }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className={`mt-4 text-sm leading-6 ${textClass}`}>{era.summary}</p>
+                <div
+                  className={`mt-4 rounded-xl border px-3 py-2 text-xs ${
+                    tone === "dark" ? "border-white/10 bg-black/10 text-white/88" : "border-border bg-bg-secondary text-text-primary"
+                  }`}
+                >
+                  {era.cue}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={sectionClass}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+                Evidence layer
+              </p>
+              <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+                {pageCopy.evidenceHeading}
+              </h2>
+            </div>
+            <span className={accentChipClass}>{pageCopy.evidenceStatus}</span>
+          </div>
+
+          <p className={`mt-4 text-sm leading-6 ${textClass}`}>{pageCopy.evidenceSummary}</p>
+          <p className={`mt-2 text-sm leading-6 ${strongTextClass}`}>{pageCopy.evidenceNote}</p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {preview.evidence.receipts.map((receipt) => (
+              <div key={receipt.label} className={cardClass}>
+                <div className={`text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                  {receipt.label}
+                </div>
+                <div className={`mt-2 text-2xl font-black ${titleClass}`}>{receipt.value}</div>
+                <p className={`mt-2 text-xs leading-5 ${textClass}`}>{receipt.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <BuilderCorePack
+        preview={preview}
+        liveProfile={liveProfile}
+        tone={tone}
+        exclude={["high-moments", "projects", "comparison"]}
+      />
     </>
   );
 }
@@ -1939,62 +2339,10 @@ function TerminalNativeBuilderPage({
             </div>
           </section>
 
-          <section className="mb-8 grid gap-5 lg:grid-cols-[1.08fr_0.92fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-[32px] border border-[#164d33] bg-[#07160f]/96 p-5 text-[#d7ffe8] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#00e676]">Agent mix</p>
-              <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">How the workflow actually looks</h2>
-              <p className="mt-4 text-sm leading-7 text-[#b9f5d4]">{preview.howIbuild.summary}</p>
-              <div className="mt-6 grid gap-4">
-                {preview.agentRoles.map((role) => (
-                  <div key={role.name} className="rounded-[24px] border border-[#164d33] bg-black/20 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-lg font-black text-white">{role.name}</div>
-                        <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-[#7eb89a]">{role.role}</div>
-                      </div>
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: role.color }} />
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-[#b9f5d4]">{role.summary}</p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.16em] text-[#7eb89a]">{role.evidence}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid gap-5">
-              <div className="rounded-[32px] border border-[#164d33] bg-[#07160f]/96 p-5 text-[#d7ffe8] sm:p-8">
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#00e676]">Signature build</p>
-                <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">{preview.signatureBuild.name}</h2>
-                <p className="mt-4 text-sm leading-7 text-[#b9f5d4]">{preview.signatureBuild.summary}</p>
-                <div className="mt-5 space-y-3">
-                  {preview.signatureBuild.proof.map((item) => (
-                    <div key={item} className="flex gap-3 text-sm text-[#b9f5d4]">
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00e676]" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-[32px] border border-[#164d33] bg-[#07160f]/96 p-5 text-[#d7ffe8] sm:p-8">
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#00e676]">High moments</p>
-                <div className="mt-4 space-y-3 text-sm leading-6 text-[#b9f5d4]">
-                  {preview.highMoments.map((moment) => (
-                    <div key={moment.label}>
-                      <div className="text-[11px] uppercase tracking-[0.18em] text-[#7eb89a]">{moment.label}</div>
-                      <div className="mt-1 font-bold text-white">{moment.value}</div>
-                      <div className="mt-1">{moment.detail}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <BuilderCorePack
+          <BuilderSharedStoryPack
             preview={preview}
             liveProfile={liveProfile}
             tone="dark"
-            exclude={["high-moments"]}
           />
 
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your build lines, command habits, and standout sessions into a shareable builder profile." />
@@ -2050,67 +2398,10 @@ function EditorialMakerBuilderPage({
             </div>
           </section>
 
-          <section className="mb-8 grid gap-5 lg:grid-cols-2 sm:mb-10 sm:gap-6">
-            <div className="rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Signature build</p>
-              <h2 className="mt-2 text-3xl font-black text-text-primary [font-family:ui-serif,Georgia,Cambria,'Times_New_Roman',serif] sm:text-4xl">
-                {preview.signatureBuild.name}
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-text-secondary">{preview.signatureBuild.summary}</p>
-              <p className="mt-4 text-sm leading-7 text-text-primary/90">{preview.signatureBuild.why}</p>
-            </div>
-            <div className="rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">High moments</p>
-              <div className="mt-5 space-y-4">
-                {preview.highMoments.map((moment) => (
-                  <div key={moment.label} className="rounded-[22px] border border-border bg-bg-primary/55 p-4">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">{moment.label}</div>
-                    <div className="mt-2 text-xl font-black text-text-primary">{moment.value}</div>
-                    <p className="mt-2 text-sm leading-6 text-text-secondary">{moment.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-8 grid gap-5 lg:grid-cols-[1.08fr_0.92fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">What actually got built</p>
-              <div className="mt-5 grid gap-4">
-                {preview.projects.slice(0, 4).map((project) => (
-                  <div key={project.name} className="rounded-[24px] border border-border bg-bg-primary/55 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-lg font-black text-text-primary">{project.name}</div>
-                      <span className="rounded-full border border-border px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-text-muted">
-                        {project.status}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-text-secondary">{project.summary}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Taste signals</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {preview.tasteSignals.map((signal) => (
-                  <span key={signal} className="rounded-full border border-border bg-bg-primary/55 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] text-text-primary">
-                    {signal}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-6 rounded-[24px] border border-border bg-bg-primary/55 p-5">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">Agent mix</div>
-                <p className="mt-3 text-sm leading-7 text-text-secondary">{preview.presentation.modeReason}</p>
-              </div>
-            </div>
-          </section>
-
-          <BuilderCorePack
+          <BuilderSharedStoryPack
             preview={preview}
             liveProfile={liveProfile}
             tone="light"
-            exclude={["high-moments", "projects"]}
           />
 
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your projects, working style, and standout moments into a shareable builder portrait." />
@@ -2127,7 +2418,6 @@ function NightShiftBuilderPage({
   themeStyle,
 }: ThemePageProps) {
   const burstValues = preview.highMoments.map((_, index) => 42 + index * 18);
-  const lang = preview.lang === "en" ? "en" : "zh";
 
   return (
     <div className="builderbio-recap-shell">
@@ -2184,57 +2474,10 @@ function NightShiftBuilderPage({
             </div>
           </section>
 
-          <section className="mb-8 grid gap-5 lg:grid-cols-2 sm:mb-10 sm:gap-6">
-            <div className="rounded-[32px] border border-[#4b2852] bg-[#140915]/88 p-5 text-[#ffe8d9] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#ff9a53]">High moments</p>
-              <div className="mt-5 space-y-4">
-                {preview.highMoments.map((moment) => (
-                  <div key={moment.label} className="rounded-[24px] border border-[#4b2852] bg-black/15 p-4">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">{moment.label}</div>
-                    <div className="mt-2 text-xl font-black text-white">{moment.value}</div>
-                    <p className="mt-2 text-sm leading-6 text-white/72">{moment.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[32px] border border-[#4b2852] bg-[#140915]/88 p-5 text-[#ffe8d9] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#ff9a53]">Agent relay</p>
-              <div className="mt-5 grid gap-4">
-                {preview.agentRoles.map((role) => (
-                  <div key={role.name} className="rounded-[24px] border border-[#4b2852] bg-black/15 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-lg font-black text-white">{role.name}</div>
-                      <span className="text-[11px] uppercase tracking-[0.16em] text-white/45">{role.role}</span>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-white/72">{role.summary}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-8 rounded-[32px] border border-[#4b2852] bg-[#140915]/88 p-5 text-[#ffe8d9] sm:mb-10 sm:p-8">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#ff9a53]">Activity</p>
-            <div className="mt-5 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-              <div className="rounded-[24px] border border-[#4b2852] bg-black/15 p-4">
-                <p className="text-sm leading-7 text-white/72">
-                  {lang === "zh"
-                    ? `${preview.whenIbuild.peakWindow} 是最容易堆出高峰的窗口，${preview.activity.activeDays} 个活跃日和 ${preview.highlights.longestStreak} 天最长连续记录，把这段夜间节奏固定了下来。`
-                    : `${preview.whenIbuild.peakWindow} is where the work clusters hardest. ${preview.activity.activeDays} active days and a ${preview.highlights.longestStreak}-day streak keep that night-shift rhythm visible.`}
-                </p>
-              </div>
-              <div className="rounded-[24px] border border-[#4b2852] bg-black/15 p-4">
-                <MiniHeatmap preview={preview} />
-              </div>
-            </div>
-          </section>
-
-          <BuilderCorePack
+          <BuilderSharedStoryPack
             preview={preview}
             liveProfile={liveProfile}
             tone="dark"
-            exclude={["high-moments", "activity"]}
           />
 
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your spikes, relay moments, and strongest sessions into a shareable builder profile." />
@@ -2289,55 +2532,7 @@ function ResearchForgeBuilderPage({
             </div>
           </section>
 
-          <section className="mb-8 grid gap-5 lg:grid-cols-[1.02fr_0.98fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Evidence cluster</p>
-              <div className="mt-5 grid gap-4">
-                {preview.evidence.receipts.map((receipt) => (
-                  <div key={receipt.label} className="rounded-[24px] border border-border bg-bg-primary/55 p-4">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">{receipt.label}</div>
-                    <div className="mt-2 text-xl font-black text-text-primary">{receipt.value}</div>
-                    <p className="mt-2 text-sm leading-6 text-text-secondary">{receipt.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Signature build</p>
-              <h2 className="mt-2 text-3xl font-black text-text-primary">{preview.signatureBuild.name}</h2>
-              <p className="mt-4 text-sm leading-7 text-text-secondary">{preview.signatureBuild.summary}</p>
-              <p className="mt-4 text-sm leading-7 text-text-primary/90">{preview.signatureBuild.why}</p>
-            </div>
-          </section>
-
-          <section className="mb-8 grid gap-5 lg:grid-cols-2 sm:mb-10 sm:gap-6">
-            <div className="rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Agent roles</p>
-              <div className="mt-5 grid gap-4">
-                {preview.agentRoles.map((role) => (
-                  <div key={role.name} className="rounded-[24px] border border-border bg-bg-primary/55 p-4">
-                    <div className="text-lg font-black text-text-primary">{role.name}</div>
-                    <div className="mt-2 text-[11px] uppercase tracking-[0.18em] text-text-muted">{role.role}</div>
-                    <p className="mt-3 text-sm leading-6 text-text-secondary">{role.summary}</p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.16em] text-text-muted">{role.evidence}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">Top-line facts</p>
-              <div className="mt-5 space-y-3">
-                  {[...preview.stats, getTokenStat(preview)].map((stat) => (
-                  <div key={stat.label} className="flex items-center justify-between gap-4 rounded-[18px] border border-border bg-bg-primary/55 px-4 py-3 text-sm">
-                    <span className="text-text-secondary">{stat.label}</span>
-                    <span className="font-bold text-text-primary">{stat.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <BuilderCorePack
+          <BuilderSharedStoryPack
             preview={preview}
             liveProfile={liveProfile}
             tone="light"
@@ -2356,8 +2551,6 @@ function CalmCraftBuilderPage({
   liveGavin,
   themeStyle,
 }: ThemePageProps) {
-  const hasRhythm = hasRenderableRhythm(preview);
-  const hasHourBars = hasRenderableHourBars(preview);
   return (
     <div className="builderbio-recap-shell">
       <Titlebar
@@ -2401,47 +2594,10 @@ function CalmCraftBuilderPage({
             </div>
           </section>
 
-          <section className="mb-8 grid gap-5 lg:grid-cols-[1.02fr_0.98fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-[32px] border border-[#3d342c] bg-[#1b1e22]/92 p-6 text-[#efe6dc] shadow-[0_18px_50px_rgba(0,0,0,0.24)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#e6bb84]">What actually got built</p>
-              <div className="mt-5 grid gap-4">
-                {preview.projects.slice(0, 4).map((project) => (
-                  <div key={project.name} className="rounded-[24px] border border-[#3d342c] bg-black/10 p-4">
-                    <div className="text-lg font-black text-white">{project.name}</div>
-                    <p className="mt-3 text-sm leading-6 text-white/68">{project.summary}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-[32px] border border-[#3d342c] bg-[#1b1e22]/92 p-6 text-[#efe6dc] shadow-[0_18px_50px_rgba(0,0,0,0.24)] sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#e6bb84]">Time rhythm</p>
-              <div className="mt-5 rounded-[24px] border border-[#3d342c] bg-black/10 p-4">
-                {hasRhythm ? (
-                  <>
-                    {hasHourBars ? (
-                      <RhythmBars preview={preview} />
-                    ) : (
-                      renderRhythmFallback(preview.lang === "en" ? "en" : "zh", "dark")
-                    )}
-                    <p className="mt-4 text-sm leading-6 text-white/68">
-                      Peak window: {preview.whenIbuild.peakWindow} · {preview.whenIbuild.peakWindowSessions} sessions
-                    </p>
-                  </>
-                ) : (
-                  renderRhythmFallback(preview.lang === "en" ? "en" : "zh", "dark")
-                )}
-              </div>
-              <div className="mt-5 rounded-[24px] border border-[#3d342c] bg-black/10 p-4">
-                <MiniHeatmap preview={preview} />
-              </div>
-            </div>
-          </section>
-
-          <BuilderCorePack
+          <BuilderSharedStoryPack
             preview={preview}
             liveProfile={liveProfile}
             tone="dark"
-            exclude={["projects"]}
           />
 
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your compounding work, calmer build rhythm, and signature projects into a shareable builder profile." />
@@ -2497,19 +2653,6 @@ export default async function BuilderBioPreviewPage({
   const themeStyle = (loaded?.themeStyle ?? {}) as CSSProperties;
   const pageCopy = buildPageCopy(preview, liveProfile);
   const chosenMode = getChosenMode(preview);
-  const hourEntries = getHourEntries(preview);
-  const maxHourSessions = Math.max(...hourEntries.map((entry) => entry.sessions), 1);
-  const heatmapCells = getHeatmapCells(preview);
-  const hasHeatmap = hasRenderableHeatmapCells(heatmapCells);
-  const hasRhythm = hasRenderableRhythm(preview);
-  const hasHourBars = hasRenderableHourBars(preview);
-  const meaningfulPeriods = preview.whenIbuild.periods.filter(
-    (period) => period.sessions > 0 || period.turns > 0
-  );
-  const peakHeadline =
-    preview.whenIbuild.peakLead || preview.whenIbuild.peakHour || preview.whenIbuild.peakWindow;
-  const peakHeadlineIsWindow =
-    peakHeadline === preview.whenIbuild.peakWindow || /[-–]/.test(peakHeadline);
 
   if (chosenMode === "conversation-first") {
     return (
@@ -2846,662 +2989,7 @@ export default async function BuilderBioPreviewPage({
             </div>
           </section>
 
-          <section className="mb-8 grid gap-5 lg:grid-cols-[1.08fr_0.92fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <div className="mb-5 flex flex-wrap items-center gap-3">
-                <span className="rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-accent">
-                  {preview.signatureBuild.stage}
-                </span>
-                <span className="text-xs uppercase tracking-[0.2em] text-text-muted">
-                  {ui.signatureHeading}
-                </span>
-              </div>
-
-              <h2 className="text-3xl font-black text-text-primary sm:text-4xl">
-                {preview.signatureBuild.name}
-              </h2>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-text-secondary sm:text-base">
-                {preview.signatureBuild.summary}
-              </p>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-text-primary/90">
-                {preview.signatureBuild.why}
-              </p>
-
-              <div className="mt-6 rounded-2xl border border-border bg-bg-primary/60 p-4">
-                <p className="mb-3 text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                  {ui.signatureWhy}
-                </p>
-                <div className="space-y-3">
-                  {preview.signatureBuild.proof.map((item) => (
-                    <div key={item} className="flex gap-3 text-sm text-text-secondary">
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                High moments
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                {pageCopy.highMomentsHeading}
-              </h2>
-
-              <div className="mt-6 space-y-4">
-                {preview.highMoments.map((moment) => (
-                  <div
-                    key={moment.label}
-                    className="rounded-2xl border border-border bg-bg-primary/55 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                        {moment.label}
-                      </div>
-                      <div className="text-sm font-bold text-accent">{moment.value}</div>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-text-secondary">{moment.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-8 grid gap-5 lg:grid-cols-[0.92fr_1.08fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                Signature moves
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                {pageCopy.signatureMovesHeading}
-              </h2>
-
-              <div className="mt-6 space-y-4">
-                {preview.signatureMoves.map((move) => (
-                  <div
-                    key={move.title}
-                    className="rounded-2xl border border-border bg-bg-primary/55 p-4"
-                  >
-                    <div className="text-lg font-black text-text-primary">{move.title}</div>
-                    <p className="mt-2 text-sm leading-6 text-text-secondary">{move.summary}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                    What actually got built
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                    {pageCopy.projectsHeading}
-                  </h2>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {preview.projects.map((project) => (
-                  <div
-                    key={project.name}
-                    className="rounded-3xl border border-border bg-bg-primary/60 p-5 transition-transform hover:-translate-y-0.5"
-                  >
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg font-black text-text-primary">{project.name}</h3>
-                        <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                          {project.proof}
-                        </p>
-                      </div>
-                      <span className="rounded-full border border-accent/25 bg-accent/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-accent">
-                        {project.status}
-                      </span>
-                    </div>
-                    <p className="text-sm leading-6 text-text-secondary">{project.summary}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {project.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full border border-border px-2.5 py-1 text-[10px] text-text-secondary"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-8 grid gap-5 lg:grid-cols-[0.92fr_1.08fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                How I Build
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                {preview.howIbuild.archetype}
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-text-secondary">
-                {preview.howIbuild.summary}
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border bg-bg-primary/55 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                    {ui.promptStyle}
-                  </div>
-                  <div className="mt-2 text-lg font-black text-text-primary">
-                    {preview.howIbuild.promptStyle}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">
-                    {preview.howIbuild.promptDetail}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-primary/55 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                    {ui.sessionRhythm}
-                  </div>
-                  <div className="mt-2 text-lg font-black text-text-primary">
-                    {preview.howIbuild.sessionRhythm}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">
-                    {preview.howIbuild.sessionDetail}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-primary/55 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                    {ui.toolPreference}
-                  </div>
-                  <div className="mt-2 text-lg font-black text-text-primary">
-                    {preview.howIbuild.toolPreference}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">
-                    {preview.howIbuild.toolDetail}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-primary/55 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                    {ui.agentLoyalty}
-                  </div>
-                  <div className="mt-2 text-lg font-black text-text-primary">
-                    {preview.howIbuild.agentLoyalty}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">
-                    {preview.howIbuild.agentDetail}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-border bg-bg-primary/60 p-4">
-                <div className="mb-3 text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                  {ui.toolDistribution}
-                </div>
-                <div className="flex h-4 overflow-hidden rounded-full bg-bg-primary">
-                  {preview.howIbuild.toolTotals.map((tool) => {
-                    const total = preview.howIbuild.toolTotals.reduce(
-                      (sum, item) => sum + item.count,
-                      0,
-                    );
-                    return (
-                      <div
-                        key={tool.label}
-                        style={{
-                          width: `${(tool.count / total) * 100}%`,
-                          backgroundColor: tool.color,
-                        }}
-                        title={`${tool.label}: ${tool.count}`}
-                      />
-                    );
-                  })}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {preview.howIbuild.toolTotals.map((tool) => (
-                    <span
-                      key={tool.label}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-2.5 py-1 text-[10px] text-text-secondary"
-                    >
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: tool.color }}
-                      />
-                      <span>
-                        {tool.label} {formatNumber(tool.count)}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {preview.comparison.length > 0 ? (
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                Agent Comparison
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                {pageCopy.agentComparisonHeading}
-              </h2>
-              <div className="mt-6 grid gap-4">
-                {preview.comparison.map((agent) => {
-                  const maxTool = Math.max(...agent.topTools.map((tool) => tool.count), 1);
-                  return (
-                    <div
-                      key={agent.name}
-                      className="rounded-2xl border border-border bg-bg-primary/60 p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: agent.color }}
-                          />
-                          <div className="text-lg font-black text-text-primary">{agent.name}</div>
-                        </div>
-                        <span className="rounded-full border border-border px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-text-muted">
-                          {agent.distribution}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        <div className="rounded-xl border border-border bg-bg-secondary px-3 py-3 text-center">
-                          <div className="text-xl font-black text-text-primary">{agent.sessions}</div>
-                          <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-text-muted">
-                            {ui.sessions}
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-border bg-bg-secondary px-3 py-3 text-center">
-                          <div className="text-xl font-black text-text-primary">
-                            {formatNumber(agent.totalTurns)}
-                          </div>
-                          <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-text-muted">
-                            {ui.turns}
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-border bg-bg-secondary px-3 py-3 text-center">
-                          <div className="text-xl font-black text-text-primary">{agent.avgTurns}</div>
-                          <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-text-muted">
-                            {ui.avgTurns}
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-border bg-bg-secondary px-3 py-3 text-center">
-                          <div className="text-xl font-black text-text-primary">
-                            {formatNumber(agent.totalToolCalls)}
-                          </div>
-                          <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-text-muted">
-                            {ui.toolCalls}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 space-y-3">
-                        {agent.topTools.map((tool) => (
-                          <div key={`${agent.name}-${tool.label}`}>
-                            <div className="mb-1 flex items-center justify-between gap-3 text-xs text-text-secondary">
-                              <span>{tool.label}</span>
-                              <span>{formatNumber(tool.count)}</span>
-                            </div>
-                            <div className="h-2 rounded-full bg-bg-secondary">
-                              <div
-                                className="h-2 rounded-full"
-                                style={{
-                                  width: `${Math.round((tool.count / maxTool) * 100)}%`,
-                                  backgroundColor: tool.color,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            ) : null}
-          </section>
-
-          <section className="mb-8 rounded-3xl border border-border bg-bg-secondary p-5 sm:mb-10 sm:p-8">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-              Agent roles
-            </p>
-            <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-              <h2 className="text-2xl font-black text-text-primary sm:text-3xl">
-                {pageCopy.agentRolesHeading}
-              </h2>
-              <p className="max-w-xl text-sm leading-6 text-text-secondary">
-                {pageCopy.agentRolesSummary}
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {preview.agentRoles.map((agent) => (
-                <div
-                  key={agent.name}
-                  className="rounded-2xl border border-border bg-bg-primary/60 p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg font-black text-text-primary">{agent.name}</h3>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-accent">
-                        {agent.role}
-                      </p>
-                    </div>
-                    <span className="rounded-full border border-border px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-text-muted">
-                      {ui.roleLens}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-text-secondary">{agent.summary}</p>
-                  <div className="mt-3 rounded-xl border border-border bg-bg-secondary px-3 py-2 text-xs text-text-primary">
-                    {agent.evidence}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-8 grid gap-5 lg:grid-cols-[1.05fr_0.95fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                    Builder eras
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                    {pageCopy.erasHeading}
-                  </h2>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {preview.eras.map((era) => (
-                  <div
-                    key={era.title}
-                    className="rounded-2xl border border-border bg-bg-primary/60 p-5"
-                  >
-                    <div className="flex flex-col gap-4">
-                      <div className="min-w-0">
-                        <h3 className="text-xl font-black text-text-primary">{era.title}</h3>
-                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-text-muted">
-                          {era.period}
-                        </p>
-                      </div>
-                      <div className="flex h-14 items-end gap-1 self-start rounded-xl border border-border bg-bg-secondary px-3 py-2">
-                        {era.bars.map((bar, index) => (
-                          <span
-                            key={`${era.title}-${index}`}
-                            className="w-2.5 rounded-t bg-accent"
-                            style={{ height: pct(bar) }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="mt-4 text-sm leading-6 text-text-secondary">{era.summary}</p>
-                    <div className="mt-4 rounded-xl border border-border bg-bg-secondary px-3 py-2 text-xs text-text-primary">
-                      {era.cue}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                    Evidence layer
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                    {pageCopy.evidenceHeading}
-                  </h2>
-                </div>
-                <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent">
-                  {pageCopy.evidenceStatus}
-                </span>
-              </div>
-
-              <p className="mt-4 text-sm leading-6 text-text-secondary">
-                {pageCopy.evidenceSummary}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-text-primary/85">
-                {pageCopy.evidenceNote}
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                {preview.evidence.receipts.map((receipt) => (
-                  <div
-                    key={receipt.label}
-                    className="rounded-2xl border border-border bg-bg-primary/60 p-4"
-                  >
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                      {receipt.label}
-                    </div>
-                    <div className="mt-2 text-2xl font-black text-text-primary">{receipt.value}</div>
-                    <p className="mt-2 text-xs leading-5 text-text-secondary">{receipt.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-8 grid gap-5 lg:grid-cols-2 sm:mb-10 sm:gap-6">
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                Tech fingerprint
-              </p>
-              <div className="mt-6 space-y-4">
-                {preview.evidence.tech.map((item) => (
-                  <div key={item.label}>
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-                      <span className="text-text-secondary">{item.label}</span>
-                      <span className="text-text-primary">{item.value}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-bg-primary">
-                      <div
-                        className="h-2 rounded-full bg-accent"
-                        style={{ width: pct(item.value) }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                When I Build
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                {preview.whenIbuild.builderType}
-              </h2>
-              <div className="mt-6">
-                {hasRhythm ? (
-                  <>
-                    {hasHourBars ? (
-                      <div className="overflow-x-auto pb-2">
-                        <div className="min-w-[420px]">
-                          <div className="flex h-36 items-end gap-1 rounded-2xl border border-border bg-bg-primary/60 px-3 py-3">
-                            {hourEntries.map((entry) => (
-                              <div key={entry.hour} className="flex h-full min-w-0 flex-1 items-end">
-                                <div
-                                  className="w-full rounded-t-[4px]"
-                                  style={{
-                                    height: `${Math.max(2, Math.round((entry.sessions / maxHourSessions) * 100))}%`,
-                                    background: hourColor(entry.hour),
-                                  }}
-                                  title={`${entry.hour}:00 — ${entry.sessions} sessions`}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-3 flex items-center justify-between text-[11px] text-text-muted">
-                            <span>0:00</span>
-                            <span>6:00</span>
-                            <span>12:00</span>
-                            <span>18:00</span>
-                            <span>23:00</span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mb-5">{renderRhythmFallback(lang)}</div>
-                    )}
-                    <div className="mt-5 rounded-2xl border border-border bg-bg-primary/60 p-4">
-                      <div className="text-xl font-black text-text-primary">
-                        {peakHeadlineIsWindow ? peakHeadline : `${peakHeadline} ${ui.peakSentence}`}
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-text-secondary">
-                        {peakHeadlineIsWindow
-                          ? lang === "zh"
-                            ? `整个窗口内累计 ${preview.whenIbuild.peakWindowSessions} 个 sessions。`
-                            : `${preview.whenIbuild.peakWindowSessions} sessions inside this window.`
-                          : `${ui.peakWindowSummary} ${preview.whenIbuild.peakWindow}. ${preview.whenIbuild.peakWindowSessions} ${ui.sessionsSuffix}`}
-                      </p>
-                    </div>
-                    {meaningfulPeriods.length > 0 ? (
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      {meaningfulPeriods.map((period) => (
-                        <div
-                          key={period.label}
-                          className="rounded-2xl border border-border bg-bg-primary/55 p-4"
-                        >
-                          <div className="text-sm font-bold text-text-primary">{period.label}</div>
-                          <div className="mt-3 text-2xl font-black text-text-primary">
-                            {period.sessions}
-                          </div>
-                          <div className="text-xs text-text-muted">{ui.sessions}</div>
-                          <div className="mt-2 text-xs text-text-secondary">
-                            {formatNumber(period.turns)} turns
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <div className="mt-1">{renderRhythmFallback(lang)}</div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-8 grid gap-5 lg:grid-cols-[1.08fr_0.92fr] sm:mb-10 sm:gap-6">
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                Activity
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                {pageCopy.activityHeading}
-              </h2>
-              {hasHeatmap ? (
-                <div className="mt-6 overflow-x-auto pb-2">
-                  <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1">
-                    {heatmapCells.map((cell) => (
-                      <div
-                        key={cell.key}
-                        className={`h-3 w-3 rounded-[3px] ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
-                        title={cell.empty ? undefined : `${cell.date}: ${cell.value} turns`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-6">{renderHeatmapFallback(lang)}</div>
-              )}
-              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-text-secondary">
-                <span>
-                  {ui.activityLongest}: <strong className="text-text-primary">{preview.activity.longestStreak} {ui.activityDays}</strong>
-                </span>
-                <span>
-                  {ui.activityCurrent}: <strong className="text-text-primary">{preview.activity.currentStreak} {ui.activityDays}</strong>
-                </span>
-                <span>
-                  {ui.activityActive}:{" "}
-                  <strong className="text-text-primary">
-                    {preview.activity.activeDays}/{preview.activity.totalDays} {ui.activityDays}
-                  </strong>
-                </span>
-              </div>
-              {hasHeatmap ? (
-                <div className="mt-4 flex items-center gap-2 text-xs text-text-muted">
-                  <span>{ui.activityLess}</span>
-                  <span className="h-3 w-3 rounded-[3px] bg-bg-primary" />
-                  <span className="h-3 w-3 rounded-[3px] bg-[#18362f]" />
-                  <span className="h-3 w-3 rounded-[3px] bg-[#1f6b58]" />
-                  <span className="h-3 w-3 rounded-[3px] bg-[#27a783]" />
-                  <span className="h-3 w-3 rounded-[3px] bg-[#34D399]" />
-                  <span>{ui.activityMore}</span>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
-                Log receipts
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-text-primary sm:text-3xl">
-                {pageCopy.receiptsHeading}
-              </h2>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border bg-bg-primary/55 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                    {ui.biggestSession}
-                  </div>
-                  <div className="mt-2 text-3xl font-black text-text-primary">
-                    {formatNumber(preview.highlights.biggestSession.turns)}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">
-                    {preview.highlights.biggestSession.display}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-primary/55 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                    {ui.busiestDay}
-                  </div>
-                  <div className="mt-2 text-2xl font-black text-text-primary">
-                    {preview.highlights.busiestDay.date}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">
-                    {preview.highlights.busiestDay.sessions} {ui.sessions} ·{" "}
-                    {formatNumber(preview.highlights.busiestDay.turns)} turns
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-primary/55 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                    {ui.longestStreak}
-                  </div>
-                  <div className="mt-2 text-3xl font-black text-text-primary">
-                    {preview.highlights.longestStreak} {ui.activityDays}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">
-                    {ui.uninterrupted}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-primary/55 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                    {ui.translateLabel}
-                  </div>
-                  <div className="mt-2 text-3xl font-black text-text-primary">
-                    {formatNumber(12711)}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">
-                    {ui.translateDesc}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 rounded-2xl border border-accent/18 bg-bg-primary/60 p-4">
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent">
-                  Featured prompt
-                </div>
-                <p className="mt-3 whitespace-pre-wrap break-words font-mono text-[12px] leading-6 text-text-secondary">
-                  {preview.highlights.favoritePrompt}
-                </p>
-              </div>
-            </div>
-          </section>
+          <BuilderSharedStoryPack preview={preview} liveProfile={liveProfile} tone="light" />
 
           <section className="rounded-3xl border border-border bg-bg-secondary p-5 sm:p-8">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
