@@ -890,6 +890,356 @@ function RhythmBars({ preview }: { preview: PreviewData }) {
   );
 }
 
+type CorePackSection =
+  | "collaboration"
+  | "high-moments"
+  | "projects"
+  | "comparison"
+  | "rhythm"
+  | "activity";
+
+function BuilderCorePack({
+  preview,
+  liveProfile,
+  tone,
+  exclude = [],
+}: {
+  preview: PreviewData;
+  liveProfile: boolean;
+  tone: "light" | "dark";
+  exclude?: CorePackSection[];
+}) {
+  const lang = preview.lang === "en" ? "en" : "zh";
+  const ui = getUiCopy(lang);
+  const pageCopy = buildPageCopy(preview, liveProfile);
+  const hourEntries = getHourEntries(preview);
+  const maxHourSessions = Math.max(...hourEntries.map((entry) => entry.sessions), 1);
+  const heatmapCells = getHeatmapCells(preview);
+  const peakHeadline =
+    preview.whenIbuild.peakLead || preview.whenIbuild.peakHour || preview.whenIbuild.peakWindow;
+  const peakHeadlineIsWindow =
+    peakHeadline === preview.whenIbuild.peakWindow || /[-–]/.test(peakHeadline);
+  const hidden = new Set(exclude);
+  const sectionClass =
+    tone === "dark"
+      ? "rounded-[32px] border border-white/10 bg-black/15 p-5 text-white sm:p-8"
+      : "rounded-[32px] border border-border bg-white/92 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.1)] sm:p-8";
+  const cardClass =
+    tone === "dark"
+      ? "rounded-[24px] border border-white/10 bg-black/10 p-4"
+      : "rounded-[24px] border border-border bg-bg-primary/55 p-4";
+  const metricClass =
+    tone === "dark"
+      ? "rounded-[18px] border border-white/10 bg-black/10 px-4 py-3 text-sm"
+      : "rounded-[18px] border border-border bg-bg-primary/55 px-4 py-3 text-sm";
+  const titleClass = tone === "dark" ? "text-white" : "text-text-primary";
+  const textClass = tone === "dark" ? "text-white/72" : "text-text-secondary";
+  const strongTextClass = tone === "dark" ? "text-white/88" : "text-text-primary/90";
+  const mutedClass = tone === "dark" ? "text-white/45" : "text-text-muted";
+
+  return (
+    <>
+      {!hidden.has("collaboration") ? (
+        <section className="mb-8 grid gap-5 lg:grid-cols-[0.96fr_1.04fr] sm:mb-10 sm:gap-6">
+          <div className={sectionClass}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+              {preview.socialCurrency.title}
+            </p>
+            <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+              {pageCopy.socialCurrencyBadge}
+            </h2>
+            <p className={`mt-4 text-sm leading-7 ${textClass}`}>
+              {pageCopy.socialCurrencySummary}
+            </p>
+            <p className={`mt-2 text-sm leading-6 ${strongTextClass}`}>
+              {preview.socialCurrency.coverageNote}
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {preview.socialCurrency.facts.map((fact) => (
+                <div key={fact.label} className={cardClass}>
+                  <div className={`text-[10px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                    {fact.label}
+                  </div>
+                  <div className={`mt-2 text-sm font-bold ${titleClass}`}>{fact.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={sectionClass}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+              Top-line facts
+            </p>
+            <div className="mt-5 grid gap-3">
+              {[...preview.stats, getTokenStat(preview)].map((stat) => (
+                <div key={stat.label} className={`flex items-center justify-between gap-4 ${metricClass}`}>
+                  <span className={textClass}>{stat.label}</span>
+                  <span className={`font-bold ${titleClass}`}>{stat.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {!hidden.has("high-moments") ? (
+        <section className={`mb-8 sm:mb-10 ${sectionClass}`}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+            High moments
+          </p>
+          <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+            {pageCopy.highMomentsHeading}
+          </h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {preview.highMoments.map((moment) => (
+              <div key={moment.label} className={cardClass}>
+                <div className={`text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                  {moment.label}
+                </div>
+                <div className={`mt-2 text-xl font-black ${titleClass}`}>{moment.value}</div>
+                <p className={`mt-2 text-sm leading-6 ${textClass}`}>{moment.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {!hidden.has("projects") ? (
+        <section className={`mb-8 sm:mb-10 ${sectionClass}`}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+            What actually got built
+          </p>
+          <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+            {pageCopy.projectsHeading}
+          </h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {preview.projects.map((project) => (
+              <div key={project.name} className={cardClass}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className={`text-lg font-black ${titleClass}`}>{project.name}</div>
+                    <p className={`mt-1 text-[11px] uppercase tracking-[0.16em] ${mutedClass}`}>
+                      {project.proof}
+                    </p>
+                  </div>
+                  <span className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.14em] ${tone === "dark" ? "border-white/10 text-white/45" : "border-border text-text-muted"}`}>
+                    {project.status}
+                  </span>
+                </div>
+                <p className={`mt-3 text-sm leading-6 ${textClass}`}>{project.summary}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {project.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className={`rounded-full border px-2.5 py-1 text-[10px] ${tone === "dark" ? "border-white/10 text-white/55" : "border-border text-text-secondary"}`}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {!hidden.has("comparison") ? (
+        <section className={`mb-8 sm:mb-10 ${sectionClass}`}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+            Agent Comparison
+          </p>
+          <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+            {pageCopy.agentComparisonHeading}
+          </h2>
+          <div className="mt-6 grid gap-4">
+            {preview.comparison.map((agent) => {
+              const maxTool = Math.max(...agent.topTools.map((tool) => tool.count), 1);
+              return (
+                <div key={agent.name} className={cardClass}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: agent.color }} />
+                      <div className={`text-lg font-black ${titleClass}`}>{agent.name}</div>
+                    </div>
+                    <span className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.16em] ${tone === "dark" ? "border-white/10 text-white/45" : "border-border text-text-muted"}`}>
+                      {agent.distribution}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className={metricClass}>
+                      <div className={`text-xl font-black ${titleClass}`}>{agent.sessions}</div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-[0.16em] ${mutedClass}`}>{ui.sessions}</div>
+                    </div>
+                    <div className={metricClass}>
+                      <div className={`text-xl font-black ${titleClass}`}>{formatNumber(agent.totalTurns)}</div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-[0.16em] ${mutedClass}`}>{ui.turns}</div>
+                    </div>
+                    <div className={metricClass}>
+                      <div className={`text-xl font-black ${titleClass}`}>{agent.avgTurns}</div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-[0.16em] ${mutedClass}`}>{ui.avgTurns}</div>
+                    </div>
+                    <div className={metricClass}>
+                      <div className={`text-xl font-black ${titleClass}`}>{formatNumber(agent.totalToolCalls)}</div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-[0.16em] ${mutedClass}`}>{ui.toolCalls}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {agent.topTools.map((tool) => (
+                      <div key={`${agent.name}-${tool.label}`}>
+                        <div className={`mb-1 flex items-center justify-between gap-3 text-xs ${textClass}`}>
+                          <span>{tool.label}</span>
+                          <span>{formatNumber(tool.count)}</span>
+                        </div>
+                        <div className={`h-2 rounded-full ${tone === "dark" ? "bg-black/15" : "bg-bg-secondary"}`}>
+                          <div
+                            className="h-2 rounded-full"
+                            style={{
+                              width: `${Math.round((tool.count / maxTool) * 100)}%`,
+                              backgroundColor: tool.color,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {!hidden.has("rhythm") ? (
+        <section className="mb-8 grid gap-5 lg:grid-cols-2 sm:mb-10 sm:gap-6">
+          <div className={sectionClass}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+              Tech fingerprint
+            </p>
+            <div className="mt-6 space-y-4">
+              {preview.evidence.tech.map((item) => (
+                <div key={item.label}>
+                  <div className={`mb-2 flex items-center justify-between gap-3 text-sm ${textClass}`}>
+                    <span>{item.label}</span>
+                    <span className={titleClass}>{item.value}%</span>
+                  </div>
+                  <div className={`h-2 rounded-full ${tone === "dark" ? "bg-black/15" : "bg-bg-primary"}`}>
+                    <div className="h-2 rounded-full bg-accent" style={{ width: pct(item.value) }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={sectionClass}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+              When I Build
+            </p>
+            <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+              {preview.whenIbuild.builderType}
+            </h2>
+            <div className="mt-6">
+              <div className="overflow-x-auto pb-2">
+                <div className="min-w-[420px]">
+                  <div className={`flex h-36 items-end gap-1 rounded-2xl px-3 py-3 ${tone === "dark" ? "border border-white/10 bg-black/10" : "border border-border bg-bg-primary/60"}`}>
+                    {hourEntries.map((entry) => (
+                      <div key={entry.hour} className="flex h-full min-w-0 flex-1 items-end">
+                        <div
+                          className="w-full rounded-t-[4px]"
+                          style={{
+                            height: `${Math.max(2, Math.round((entry.sessions / maxHourSessions) * 100))}%`,
+                            background: hourColor(entry.hour),
+                          }}
+                          title={`${entry.hour}:00 — ${entry.sessions} sessions`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className={`mt-3 flex items-center justify-between text-[11px] ${mutedClass}`}>
+                    <span>0:00</span>
+                    <span>6:00</span>
+                    <span>12:00</span>
+                    <span>18:00</span>
+                    <span>23:00</span>
+                  </div>
+                </div>
+              </div>
+              <div className={`mt-5 rounded-2xl ${tone === "dark" ? "border border-white/10 bg-black/10" : "border border-border bg-bg-primary/60"} p-4`}>
+                <div className={`text-xl font-black ${titleClass}`}>
+                  {peakHeadlineIsWindow ? peakHeadline : `${peakHeadline} ${ui.peakSentence}`}
+                </div>
+                <p className={`mt-2 text-sm leading-6 ${textClass}`}>
+                  {peakHeadlineIsWindow
+                    ? lang === "zh"
+                      ? `整个窗口内累计 ${preview.whenIbuild.peakWindowSessions} 个 sessions。`
+                      : `${preview.whenIbuild.peakWindowSessions} sessions inside this window.`
+                    : `${ui.peakWindowSummary} ${preview.whenIbuild.peakWindow}. ${preview.whenIbuild.peakWindowSessions} ${ui.sessionsSuffix}`}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {!hidden.has("activity") ? (
+        <section className="mb-8 grid gap-5 lg:grid-cols-[1.08fr_0.92fr] sm:mb-10 sm:gap-6">
+          <div className={sectionClass}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+              Activity
+            </p>
+            <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+              {pageCopy.activityHeading}
+            </h2>
+            <div className="mt-6 overflow-x-auto pb-2">
+              <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1">
+                {heatmapCells.map((cell) => (
+                  <div
+                    key={cell.key}
+                    className={`h-3 w-3 rounded-[3px] ${cell.empty ? "bg-transparent" : heatmapLevel(cell.value)}`}
+                    title={cell.empty ? undefined : `${cell.date}: ${cell.value} turns`}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className={`mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm ${textClass}`}>
+              <span>
+                {ui.activityLongest}: <strong className={titleClass}>{preview.activity.longestStreak} {ui.activityDays}</strong>
+              </span>
+              <span>
+                {ui.activityCurrent}: <strong className={titleClass}>{preview.activity.currentStreak} {ui.activityDays}</strong>
+              </span>
+              <span>
+                {ui.activityActive}: <strong className={titleClass}>{preview.activity.activeDays}/{preview.activity.totalDays} {ui.activityDays}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div className={sectionClass}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-accent">
+              Log receipts
+            </p>
+            <h2 className={`mt-2 text-2xl font-black sm:text-3xl ${titleClass}`}>
+              {pageCopy.receiptsHeading}
+            </h2>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {preview.evidence.receipts.map((receipt) => (
+                <div key={receipt.label} className={cardClass}>
+                  <div className={`text-[11px] uppercase tracking-[0.18em] ${mutedClass}`}>
+                    {receipt.label}
+                  </div>
+                  <div className={`mt-2 text-2xl font-black ${titleClass}`}>{receipt.value}</div>
+                  <p className={`mt-2 text-xs leading-5 ${textClass}`}>{receipt.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+    </>
+  );
+}
+
 function ConversationFirstRecapPage({
   preview,
   liveProfile,
@@ -1509,6 +1859,13 @@ function TerminalNativeBuilderPage({
             </div>
           </section>
 
+          <BuilderCorePack
+            preview={preview}
+            liveProfile={liveProfile}
+            tone="dark"
+            exclude={["high-moments"]}
+          />
+
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your build lines, command habits, and standout sessions into a shareable builder profile." />
         </main>
       </div>
@@ -1617,6 +1974,13 @@ function EditorialMakerBuilderPage({
               </div>
             </div>
           </section>
+
+          <BuilderCorePack
+            preview={preview}
+            liveProfile={liveProfile}
+            tone="light"
+            exclude={["high-moments", "projects"]}
+          />
 
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your projects, working style, and standout moments into a shareable builder portrait." />
         </main>
@@ -1732,6 +2096,13 @@ function NightShiftBuilderPage({
             </div>
           </section>
 
+          <BuilderCorePack
+            preview={preview}
+            liveProfile={liveProfile}
+            tone="dark"
+            exclude={["high-moments", "activity"]}
+          />
+
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your spikes, relay moments, and strongest sessions into a shareable builder profile." />
         </main>
       </div>
@@ -1776,7 +2147,7 @@ function ResearchForgeBuilderPage({
                 </div>
               </div>
               <div>
-                <h2 className="text-[2.05rem] font-black leading-[1.05] text-text-primary sm:text-[2.6rem]">
+                <h2 className="text-[1.75rem] font-black leading-[1.08] text-text-primary sm:text-[2.2rem]">
                   {preview.thesis}
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-text-secondary">{preview.recap}</p>
@@ -1831,6 +2202,12 @@ function ResearchForgeBuilderPage({
               </div>
             </div>
           </section>
+
+          <BuilderCorePack
+            preview={preview}
+            liveProfile={liveProfile}
+            tone="light"
+          />
 
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your evidence clusters, project arcs, and AI roles into a shareable builder dossier." />
         </main>
@@ -1913,6 +2290,13 @@ function CalmCraftBuilderPage({
               </div>
             </div>
           </section>
+
+          <BuilderCorePack
+            preview={preview}
+            liveProfile={liveProfile}
+            tone="dark"
+            exclude={["projects"]}
+          />
 
           <ThemeCtaBlock summary="Give BuilderBio the history of your local coding agents and it will turn your compounding work, calmer build rhythm, and signature projects into a shareable builder profile." />
         </main>
