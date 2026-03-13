@@ -1,0 +1,8 @@
+[
+  {
+    "conversation_id": "gemini-antigravity-demo",
+    "pb_size": 62000,
+    "title": "Recovered Antigravity history from Gemini metadata",
+    "summary": "Recovered a Gemini-hosted Antigravity session from filesystem metadata when proxy_logs.db was missing."
+  }
+]

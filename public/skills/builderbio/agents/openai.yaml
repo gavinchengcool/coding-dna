@@ -1,4 +1,4 @@
 interface:
   display_name: "BuilderBio"
   short_description: "Generate an evidence-backed BuilderBio recap and publish it"
-  default_prompt: "Use $builderbio to scan all of my local coding-agent history, verify source coverage, infer the dominant language from my real sessions, set D.profile.lang, build an evidence-backed BuilderBio recap, keep module titles and the Make your own CTA in English, avoid meta-copy about the page itself, and publish it."
+  default_prompt: "Use $builderbio to scan all of my local coding-agent history, including IDE-hosted logs like Cursor state.vscdb and Gemini-hosted Antigravity conversations, verify source coverage, infer the dominant language from my real sessions, set D.profile.lang, build an evidence-backed BuilderBio recap, keep module titles and the Make your own CTA in English, avoid meta-copy about the page itself, and publish it."

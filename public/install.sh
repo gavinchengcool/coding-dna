@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# builderbio installer v0.7.2
+# builderbio installer v0.7.3
 # Usage: curl -sfL https://builderbio.dev/install.sh | bash
 set -euo pipefail
 
-VERSION="0.7.2"
+VERSION="0.7.3"
 BASE_URL="${BUILDERBIO_URL:-https://builderbio.dev}"
 INSTALL_DIR="${HOME}/.builderbio"
 SKILL_DIR="${INSTALL_DIR}/skills/builderbio"
@@ -18,6 +18,7 @@ mkdir -p "${SKILL_DIR}/scripts"
 mkdir -p "${SKILL_DIR}/assets"
 mkdir -p "${SKILL_DIR}/references"
 mkdir -p "${SKILL_DIR}/evals"
+mkdir -p "${SKILL_DIR}/evals/fixtures/antigravity"
 mkdir -p "${SKILL_DIR}/evals/fixtures/claude/projects/demo/subagents"
 mkdir -p "${SKILL_DIR}/evals/fixtures/codex/sessions/2026/03/01"
 mkdir -p "${SKILL_DIR}/evals/fixtures/cursor/logs"
@@ -50,11 +51,14 @@ curl -sfL "${BASE_URL}/skills/builderbio/references/workflow-details.md" -o "${S
 echo "  ✓ references/"
 
 curl -sfL "${BASE_URL}/skills/builderbio/evals/evals.json" -o "${SKILL_DIR}/evals/evals.json"
+curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/antigravity/sessions.json" -o "${SKILL_DIR}/evals/fixtures/antigravity/sessions.json"
 curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/claude/history.jsonl" -o "${SKILL_DIR}/evals/fixtures/claude/history.jsonl"
 curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/claude/projects/demo/main-session.jsonl" -o "${SKILL_DIR}/evals/fixtures/claude/projects/demo/main-session.jsonl"
 curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/claude/projects/demo/subagents/agent-worker.jsonl" -o "${SKILL_DIR}/evals/fixtures/claude/projects/demo/subagents/agent-worker.jsonl"
 curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/codex/sessions/2026/03/01/rollout-sample.jsonl" -o "${SKILL_DIR}/evals/fixtures/codex/sessions/2026/03/01/rollout-sample.jsonl"
+curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/cursor/composer_data.json" -o "${SKILL_DIR}/evals/fixtures/cursor/composer_data.json"
 curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/cursor/logs/cursor-session.jsonl" -o "${SKILL_DIR}/evals/fixtures/cursor/logs/cursor-session.jsonl"
+curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/cursor/tracking_rows.json" -o "${SKILL_DIR}/evals/fixtures/cursor/tracking_rows.json"
 curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/trae/itemtable_rows.json" -o "${SKILL_DIR}/evals/fixtures/trae/itemtable_rows.json"
 curl -sfL "${BASE_URL}/skills/builderbio/evals/fixtures/expected.json" -o "${SKILL_DIR}/evals/fixtures/expected.json"
 echo "  ✓ evals/"

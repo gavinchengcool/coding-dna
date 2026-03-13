@@ -1,6 +1,6 @@
 {
   "skill_name": "builderbio",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "benchmark_axes": {
     "coverage": "Discover strong-path logs plus weak-path candidates, never silently dropping unknown sources.",
     "truth": "Produce evidence-backed facts and carry scan transparency through publish.",
@@ -30,7 +30,8 @@
         "Recursively scans ~/.claude/projects and merges subagent logs by sessionId",
         "Uses Codex cumulative token snapshots instead of double-counting turn-level token events",
         "Scans Trae state.vscdb ItemTable keys across supported key families",
-        "Performs weak discovery across common roots to detect additional chat/session logs such as Cursor-like JSONL files",
+        "Scans Cursor workspaceStorage state.vscdb and composer.composerData before falling back to weaker Cursor-like chat logs",
+        "Falls back to ~/.gemini/antigravity filesystem metadata when Antigravity proxy_logs.db is absent",
         "Uses a generic fallback parser for chat-like JSON/JSONL sources when no dedicated parser exists",
         "If unsupported or partial sources remain, records them in the audit with a recommended action"
       ]

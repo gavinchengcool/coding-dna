@@ -1,8 +1,8 @@
 ---
 name: builderbio
-version: 0.7.2
+version: 0.7.3
 description: |
-  Use this skill when the user wants a BuilderBio, builder recap, builder profile, AI build history, annual-review style coding recap, or a shareable page about how they build with AI agents. It scans local coding-agent logs across Claude Code, Codex, Trae, Cursor-like fallbacks, OpenClaw, Antigravity, Kiro, Windsurf, and other discovered sources; produces a scan audit; derives evidence-backed builder narratives; and publishes a shareable BuilderBio.
+  Use this skill when the user wants a BuilderBio, builder recap, builder profile, AI build history, annual-review style coding recap, or a shareable page about how they build with AI agents. It scans local coding-agent logs across Claude Code, Codex, Trae, Cursor, OpenClaw, Antigravity, Gemini-hosted Antigravity fallbacks, Kiro, Windsurf, and other discovered sources; produces a scan audit; derives evidence-backed builder narratives; and publishes a shareable BuilderBio.
 allowed-tools:
   - Read
   - Write

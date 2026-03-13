@@ -17,6 +17,7 @@ Find as much relevant local coding-agent history as reasonably possible.
 ### Pass Signals
 
 - Strong-path discovery runs across all supported agent roots
+- Editor-hosted logs such as Cursor `state.vscdb` and Gemini-hosted Antigravity conversations are covered before weaker fallbacks
 - Weak discovery probes common app-support/config roots
 - Unknown sources are surfaced in the audit
 - If the user claims to use an agent, the skill attempts a second-pass check before giving up

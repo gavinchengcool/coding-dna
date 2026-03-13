@@ -11,6 +11,7 @@ Usage:
         --claude-dir ~/.claude \
         --codex-dir ~/.codex \
         --trae-dir "~/Library/Application Support/Trae" \
+        --cursor-dir "~/Library/Application Support/Cursor" \
         --antigravity-dir ~/.antigravity_tools \
         --kiro-dir ~/.kiro \
         --windsurf-dir ~/.windsurf \
@@ -31,7 +32,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 
-SCANNER_VERSION = "0.7.2"
+SCANNER_VERSION = "0.7.3"
 MAX_AUDIT_ITEMS = 25
 WEAK_SCAN_LIMIT = 400
 COMMON_DISCOVERY_ROOTS = [
@@ -114,6 +115,10 @@ def main():
     trae_dir = os.path.expanduser(args.get("trae_dir", "~/Library/Application Support/Trae"))
     trae_cn_dir = os.path.expanduser("~/Library/Application Support/Trae CN")
     antigravity_dir = os.path.expanduser(args.get("antigravity_dir", "~/.antigravity_tools"))
+    gemini_antigravity_dir = os.path.expanduser("~/.gemini/antigravity")
+    cursor_dir = os.path.expanduser(
+        args.get("cursor_dir", "~/Library/Application Support/Cursor")
+    )
     kiro_dir = os.path.expanduser(args.get("kiro_dir", "~/.kiro"))
     windsurf_dir = os.path.expanduser(args.get("windsurf_dir", "~/.windsurf"))
     openclaw_dir = os.path.expanduser(args.get("openclaw_dir", "~/.openclaw"))
@@ -130,6 +135,8 @@ def main():
         trae_dir,
         trae_cn_dir,
         antigravity_dir,
+        gemini_antigravity_dir,
+        cursor_dir,
         kiro_dir,
         windsurf_dir,
         openclaw_dir,
@@ -214,7 +221,9 @@ def init_scan_audit(args, days, cutoff):
             "claude": args.get("claude_dir", "~/.claude"),
             "codex": args.get("codex_dir", "~/.codex"),
             "trae": args.get("trae_dir", "~/Library/Application Support/Trae"),
+            "cursor": args.get("cursor_dir", "~/Library/Application Support/Cursor"),
             "antigravity": args.get("antigravity_dir", "~/.antigravity_tools"),
+            "gemini_antigravity": "~/.gemini/antigravity",
             "kiro": args.get("kiro_dir", "~/.kiro"),
             "windsurf": args.get("windsurf_dir", "~/.windsurf"),
             "openclaw": args.get("openclaw_dir", "~/.openclaw"),
@@ -334,6 +343,8 @@ def discover_sources(
     trae_dir,
     trae_cn_dir,
     antigravity_dir,
+    gemini_antigravity_dir,
+    cursor_dir,
     kiro_dir,
     windsurf_dir,
     openclaw_dir,
@@ -350,6 +361,8 @@ def discover_sources(
             "trae_dir": trae_dir,
             "trae_cn_dir": trae_cn_dir,
             "antigravity_dir": antigravity_dir,
+            "gemini_antigravity_dir": gemini_antigravity_dir,
+            "cursor_dir": cursor_dir,
             "kiro_dir": kiro_dir,
             "windsurf_dir": windsurf_dir,
             "openclaw_dir": openclaw_dir,
@@ -402,6 +415,43 @@ def discover_sources(
             make_source("antigravity", "antigravity-db", antigravity_db, "strong", "proxy-logs-db", "antigravity_dir"),
             "strong_sources",
         )
+
+    gemini_conv_dir = os.path.join(gemini_antigravity_dir, "conversations")
+    if os.path.isdir(gemini_conv_dir) and glob.glob(os.path.join(gemini_conv_dir, "*.pb")):
+        add_source(
+            discovery,
+            audit,
+            seen_paths,
+            make_source(
+                "antigravity",
+                "antigravity-gemini",
+                gemini_conv_dir,
+                "strong",
+                "gemini-conversations",
+                "gemini_antigravity_dir",
+            ),
+            "strong_sources",
+        )
+
+    cursor_ws = os.path.join(cursor_dir, "User", "workspaceStorage")
+    if os.path.isdir(cursor_ws):
+        for root, _dirs, files in os.walk(cursor_ws):
+            for fname in files:
+                if fname == "state.vscdb":
+                    add_source(
+                        discovery,
+                        audit,
+                        seen_paths,
+                        make_source(
+                            "cursor",
+                            "cursor-db",
+                            os.path.join(root, fname),
+                            "strong",
+                            "cursor-state-vscdb",
+                            "cursor_dir",
+                        ),
+                        "strong_sources",
+                    )
 
     if os.path.isdir(kiro_dir):
         for fp in glob.glob(os.path.join(kiro_dir, "*.db")):
@@ -735,11 +785,31 @@ def probe_sqlite_source(path, agent_hint):
                 "reason": "",
             }
 
+        if "ai_code_hashes" in tables:
+            conn.close()
+            return {
+                "recognized": False,
+                "agent": "cursor",
+                "parser": "",
+                "probe_hint": "cursor-tracking-db",
+                "chat_like": False,
+                "reason": "",
+            }
+
         if "ItemTable" in tables:
             cur.execute("SELECT key FROM ItemTable LIMIT 50")
             keys = [row["key"] for row in cur.fetchall() if row["key"]]
             conn.close()
             keys_text = " ".join(keys).lower()
+            if "composer.composerdata" in keys_text or "aiservice.generations" in keys_text:
+                return {
+                    "recognized": True,
+                    "agent": "cursor",
+                    "parser": "cursor-db",
+                    "probe_hint": "cursor-itemtable",
+                    "chat_like": True,
+                    "reason": "",
+                }
             if "icube-ai" in keys_text or "chathistoryneedtobemigrated" in keys_text:
                 return {
                     "recognized": True,
@@ -846,6 +916,17 @@ def parse_discovered_sources(discovery, cutoff, history, audit):
         )
         register_sessions(sessions, antigravity_sessions, seen_session_keys, audit)
         mark_sources_parsed(audit, "antigravity", discovery["strong_sources"], "antigravity-db")
+
+    gemini_ag_dir = discovery["roots"].get("gemini_antigravity_dir", "")
+    if gemini_ag_dir and os.path.isdir(gemini_ag_dir):
+        gemini_ag_sessions = parse_antigravity_gemini_sessions(gemini_ag_dir, cutoff)
+        register_sessions(sessions, gemini_ag_sessions, seen_session_keys, audit)
+        mark_sources_parsed(audit, "antigravity", discovery["strong_sources"], "antigravity-gemini")
+
+    if os.path.isdir(discovery["roots"].get("cursor_dir", "")):
+        cursor_sessions = parse_cursor_sessions(discovery["roots"]["cursor_dir"], cutoff)
+        register_sessions(sessions, cursor_sessions, seen_session_keys, audit)
+        mark_sources_parsed(audit, "cursor", discovery["strong_sources"], "cursor-db")
 
     if os.path.isdir(discovery["roots"]["kiro_dir"]):
         kiro_sessions = parse_kiro_sessions(discovery["roots"]["kiro_dir"], cutoff)
@@ -1077,6 +1158,26 @@ def parse_source_with_fallback(source, cutoff, history, audit):
                 probe_hint=source["probe_hint"],
             )
             for session in _parse_trae_db(path, cutoff, set())
+        ]
+    elif parser == "cursor-db":
+        sessions = [
+            annotate_session(
+                session,
+                source_path=path,
+                parse_mode="partial",
+                partial_reasons=session.get("partial_reasons") or ["tokens_unavailable"],
+                parser=parser,
+                discovery_strength=source["strength"],
+                probe_hint=source["probe_hint"],
+                agent_override=agent,
+            )
+            for session in _parse_cursor_db(
+                path,
+                cutoff,
+                set(),
+                _load_cursor_tracking(),
+                _read_cursor_workspace_folder(os.path.dirname(path)),
+            )
         ]
 
     if not sessions:
@@ -1943,6 +2044,351 @@ def parse_antigravity_sessions(antigravity_dir, cutoff):
         })
 
     return sessions
+
+
+# ---------------------------------------------------------------------------
+# Antigravity (Gemini App) metadata fallback parser
+# ---------------------------------------------------------------------------
+
+GEMINI_BYTES_PER_TURN = 15000
+
+
+def parse_antigravity_gemini_sessions(gemini_dir, cutoff):
+    """Recover Antigravity sessions from Gemini app metadata.
+
+    The Gemini-hosted Antigravity client stores encrypted conversation blobs in
+    conversations/*.pb. We cannot decode the payload without runtime keys, but
+    we can still recover useful session metadata from file timestamps, file
+    size, and brain-side markdown/metadata artifacts.
+    """
+    conv_dir = os.path.join(gemini_dir, "conversations")
+    brain_dir = os.path.join(gemini_dir, "brain")
+
+    if not os.path.isdir(conv_dir):
+        return []
+
+    pb_files = glob.glob(os.path.join(conv_dir, "*.pb"))
+    if not pb_files:
+        return []
+
+    sessions = []
+
+    for pb_path in sorted(pb_files):
+        cid = Path(pb_path).stem
+
+        try:
+            stat = os.stat(pb_path)
+            created_at = datetime.fromtimestamp(
+                getattr(stat, "st_birthtime", stat.st_ctime),
+                tz=timezone.utc,
+            )
+            updated_at = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
+            pb_size = stat.st_size
+        except OSError:
+            continue
+
+        if created_at < cutoff:
+            continue
+
+        est_turns = max(2, pb_size // GEMINI_BYTES_PER_TURN)
+        duration = max(0, int((updated_at - created_at).total_seconds()))
+        display = ""
+        summary = ""
+        brain_path = os.path.join(brain_dir, cid)
+
+        if os.path.isdir(brain_path):
+            meta_files = glob.glob(os.path.join(brain_path, "*.metadata.json"))
+            for meta_path in meta_files:
+                try:
+                    with open(meta_path, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
+                    candidate = meta.get("summary", "")
+                    if candidate and len(candidate) > len(summary):
+                        summary = candidate
+                except (OSError, json.JSONDecodeError, TypeError):
+                    continue
+
+            for md_path in glob.glob(os.path.join(brain_path, "*.md")):
+                try:
+                    with open(md_path, "r", encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith("# "):
+                                display = line[2:].strip()[:100]
+                                break
+                except OSError:
+                    continue
+                if display:
+                    break
+
+        if not display and summary:
+            display = summary[:100]
+        if not display:
+            display = f"Antigravity session {cid[:8]}"
+
+        sessions.append(
+            {
+                "id": f"ag-gemini-{cid[:12]}",
+                "agent": "antigravity",
+                "model": "gemini",
+                "version": "",
+                "date": created_at.strftime("%Y-%m-%d"),
+                "display": display,
+                "first_msg": display,
+                "turns": est_turns,
+                "user_turns": est_turns // 2,
+                "assistant_turns": est_turns - est_turns // 2,
+                "tool_calls": 0,
+                "tools": {},
+                "tokens": 0,
+                "duration_seconds": duration,
+                "cwd": "",
+                "git_branch": "",
+                "_start_hour": created_at.hour,
+                "start_time": created_at.isoformat(),
+                "end_time": updated_at.isoformat(),
+                "source_refs": [shorten_path(pb_path)],
+                "parser": "antigravity-gemini",
+                "parse_mode": "partial",
+                "partial_reasons": ["encrypted-pb-metadata-only"],
+                "discovery_strength": "strong",
+                "probe_hint": "gemini-conversations",
+            }
+        )
+
+    return sessions
+
+
+# ---------------------------------------------------------------------------
+# Cursor parser
+# ---------------------------------------------------------------------------
+
+def parse_cursor_sessions(cursor_dir, cutoff):
+    """Parse Cursor sessions from workspace state.vscdb files."""
+    sessions = []
+    seen_ids = set()
+    tracking = _load_cursor_tracking()
+    ws_root = os.path.join(cursor_dir, "User", "workspaceStorage")
+
+    if not os.path.isdir(ws_root):
+        return sessions
+
+    for ws_name in os.listdir(ws_root):
+        ws_dir = os.path.join(ws_root, ws_name)
+        db_path = os.path.join(ws_dir, "state.vscdb")
+        if not os.path.isfile(db_path):
+            continue
+        cwd = _read_cursor_workspace_folder(ws_dir)
+        sessions.extend(_parse_cursor_db(db_path, cutoff, seen_ids, tracking, cwd))
+
+    return sessions
+
+
+def _load_cursor_tracking():
+    """Load Cursor ai-code-tracking.db conversation stats."""
+    tracking = {}
+    db_path = os.path.expanduser("~/.cursor/ai-tracking/ai-code-tracking.db")
+    if not os.path.isfile(db_path):
+        return tracking
+
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT conversationId, COUNT(*) as hashes, "
+            "GROUP_CONCAT(DISTINCT model) as models, "
+            "GROUP_CONCAT(DISTINCT fileExtension) as exts, "
+            "MIN(timestamp) as start_ts, MAX(timestamp) as end_ts "
+            "FROM ai_code_hashes "
+            "WHERE conversationId IS NOT NULL "
+            "GROUP BY conversationId"
+        )
+        for row in cur.fetchall():
+            conversation_id = row[0]
+            tracking[conversation_id] = {
+                "hashes": row[1],
+                "models": set(item for item in (row[2] or "").split(",") if item),
+                "file_extensions": set(item for item in (row[3] or "").split(",") if item),
+                "start_ts": row[4],
+                "end_ts": row[5],
+            }
+        conn.close()
+    except (sqlite3.Error, OSError):
+        return {}
+
+    return tracking
+
+
+def _read_cursor_workspace_folder(ws_dir):
+    """Read a Cursor workspace folder hint from workspace.json."""
+    ws_json = os.path.join(ws_dir, "workspace.json")
+    if not os.path.isfile(ws_json):
+        return ""
+    try:
+        with open(ws_json, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        folder = data.get("folder", "")
+        if folder.startswith("file://"):
+            from urllib.parse import unquote, urlparse
+
+            parsed = urlparse(folder)
+            return unquote(parsed.path)
+        if folder.startswith("vscode-remote://"):
+            parts = folder.split("/", 3)
+            if len(parts) >= 4:
+                return "/" + parts[3]
+        return folder
+    except (OSError, json.JSONDecodeError, TypeError):
+        return ""
+
+
+def _parse_cursor_db(db_path, cutoff, seen_ids, tracking, cwd):
+    """Extract Cursor composer sessions from a single state.vscdb."""
+    results = []
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        gen_count = 0
+        cur.execute("SELECT value FROM ItemTable WHERE key = 'aiService.generations'")
+        gen_row = cur.fetchone()
+        if gen_row:
+            payload = gen_row[0]
+            if isinstance(payload, (bytes, bytearray)):
+                payload = payload.decode("utf-8", errors="replace")
+            try:
+                generations = json.loads(payload)
+                if isinstance(generations, list):
+                    gen_count = len(generations)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        cur.execute("SELECT value FROM ItemTable WHERE key = 'composer.composerData'")
+        row = cur.fetchone()
+        if row:
+            payload = row[0]
+            if isinstance(payload, (bytes, bytearray)):
+                payload = payload.decode("utf-8", errors="replace")
+            try:
+                data = json.loads(payload)
+            except (json.JSONDecodeError, TypeError):
+                data = {}
+
+            composers = data.get("allComposers", [])
+            if isinstance(composers, list):
+                for composer in composers:
+                    if not isinstance(composer, dict):
+                        continue
+                    cid = composer.get("composerId", "")
+                    if not cid or cid in seen_ids:
+                        continue
+
+                    name = composer.get("name", "")
+                    if not name or name == "?":
+                        continue
+
+                    start_ts = parse_ts(composer.get("createdAt"))
+                    end_ts = parse_ts(composer.get("lastUpdatedAt"))
+                    if start_ts and start_ts < cutoff:
+                        continue
+
+                    lines_added = composer.get("totalLinesAdded", 0) or 0
+                    lines_removed = composer.get("totalLinesRemoved", 0) or 0
+                    files_changed = composer.get("filesChangedCount", 0) or 0
+                    tracking_meta = tracking.get(cid, {})
+                    code_hashes = tracking_meta.get("hashes", 0)
+                    model_names = tracking_meta.get("models", set())
+                    model_str = ", ".join(sorted(model_names)) if model_names else ""
+
+                    if code_hashes > 0:
+                        est_turns = max(2, code_hashes // 10)
+                        tool_calls = max(1, code_hashes // 5)
+                    else:
+                        total_lines = lines_added + lines_removed
+                        est_turns = max(2, total_lines // 50) if total_lines else 2
+                        tool_calls = files_changed
+
+                    duration = 0
+                    date_str = ""
+                    if start_ts:
+                        date_str = start_ts.strftime("%Y-%m-%d")
+                    if start_ts and end_ts:
+                        duration = max(0, int((end_ts - start_ts).total_seconds()))
+
+                    partial_reasons = ["tokens_unavailable"]
+                    if not code_hashes:
+                        partial_reasons.append("no_tracking_data")
+                    if not model_str:
+                        partial_reasons.append("model_unavailable")
+
+                    seen_ids.add(cid)
+                    subtitle = composer.get("subtitle", "")
+                    results.append(
+                        {
+                            "id": f"cursor-{cid[:16]}",
+                            "agent": "cursor",
+                            "model": model_str,
+                            "version": "",
+                            "date": date_str,
+                            "display": name[:100],
+                            "first_msg": (subtitle[:200] if subtitle else name[:200]),
+                            "turns": est_turns,
+                            "user_turns": est_turns // 2,
+                            "assistant_turns": est_turns - est_turns // 2,
+                            "tool_calls": tool_calls,
+                            "tools": {},
+                            "tokens": 0,
+                            "duration_seconds": duration,
+                            "cwd": cwd,
+                            "git_branch": "",
+                            "_start_hour": start_ts.hour if start_ts else None,
+                            "source_refs": [shorten_path(db_path)],
+                            "parser": "cursor-db",
+                            "parse_mode": "partial",
+                            "partial_reasons": partial_reasons,
+                            "discovery_strength": "strong",
+                            "probe_hint": "cursor-state-vscdb",
+                        }
+                    )
+
+        if not results and gen_count > 0:
+            session_id = f"cursor-gen-{uuid.uuid4().hex[:8]}"
+            if session_id not in seen_ids:
+                seen_ids.add(session_id)
+                results.append(
+                    {
+                        "id": session_id,
+                        "agent": "cursor",
+                        "model": "",
+                        "version": "",
+                        "date": "",
+                        "display": f"{gen_count} AI generations",
+                        "first_msg": "",
+                        "turns": gen_count,
+                        "user_turns": gen_count,
+                        "assistant_turns": gen_count,
+                        "tool_calls": 0,
+                        "tools": {},
+                        "tokens": 0,
+                        "duration_seconds": 0,
+                        "cwd": cwd,
+                        "git_branch": "",
+                        "_start_hour": None,
+                        "source_refs": [shorten_path(db_path)],
+                        "parser": "cursor-db",
+                        "parse_mode": "partial",
+                        "partial_reasons": ["generations_only"],
+                        "discovery_strength": "strong",
+                        "probe_hint": "cursor-state-vscdb",
+                    }
+                )
+
+        conn.close()
+    except (sqlite3.Error, OSError):
+        return results
+
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -3073,6 +3519,8 @@ def parse_args():
             result["codex_dir"] = argv[i + 1]; i += 2
         elif argv[i] == "--trae-dir" and i + 1 < len(argv):
             result["trae_dir"] = argv[i + 1]; i += 2
+        elif argv[i] == "--cursor-dir" and i + 1 < len(argv):
+            result["cursor_dir"] = argv[i + 1]; i += 2
         elif argv[i] == "--antigravity-dir" and i + 1 < len(argv):
             result["antigravity_dir"] = argv[i + 1]; i += 2
         elif argv[i] == "--kiro-dir" and i + 1 < len(argv):

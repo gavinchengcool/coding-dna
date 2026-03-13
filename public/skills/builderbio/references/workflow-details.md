@@ -35,8 +35,14 @@ ls -lt ~/.codex/sessions/*/*/*/*.jsonl 2>/dev/null | head -100
 find ~/Library/Application\ Support/Trae/User -name state.vscdb 2>/dev/null | head -50
 find ~/Library/Application\ Support/Trae\ CN/User -name state.vscdb 2>/dev/null | head -50
 
+# Cursor
+find ~/Library/Application\ Support/Cursor/User/workspaceStorage -name state.vscdb 2>/dev/null | head -50
+
 # Antigravity
 ls -la ~/.antigravity_tools/proxy_logs.db 2>/dev/null
+
+# Gemini-hosted Antigravity fallback
+find ~/.gemini/antigravity/conversations -name '*.pb' 2>/dev/null | head -50
 
 # Kiro
 ls -la ~/.kiro/*.db 2>/dev/null
@@ -82,6 +88,7 @@ python <skill-path>/scripts/parse_sessions.py \
   --claude-dir ~/.claude \
   --codex-dir ~/.codex \
   --trae-dir "~/Library/Application Support/Trae" \
+  --cursor-dir "~/Library/Application Support/Cursor" \
   --antigravity-dir ~/.antigravity_tools \
   --kiro-dir ~/.kiro \
   --windsurf-dir ~/.windsurf \
@@ -94,6 +101,7 @@ Rules:
 
 - Use `--days 0` for full-history scan
 - Include only flags for roots that actually exist
+- If `~/.antigravity_tools/proxy_logs.db` is missing, still inspect `~/.gemini/antigravity`
 - The parser should emit:
   - `scanner_version`
   - `scan_audit.summary`

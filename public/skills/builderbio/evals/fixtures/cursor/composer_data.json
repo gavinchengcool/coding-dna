@@ -1,0 +1,14 @@
+{
+  "allComposers": [
+    {
+      "composerId": "cmp-checkout-fix-1234",
+      "name": "Fix checkout summary drift",
+      "subtitle": "Trace discount rounding between cart and confirmation views",
+      "createdAt": "2026-03-02T08:00:00Z",
+      "lastUpdatedAt": "2026-03-02T08:20:00Z",
+      "totalLinesAdded": 120,
+      "totalLinesRemoved": 20,
+      "filesChangedCount": 6
+    }
+  ]
+}
