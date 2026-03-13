@@ -91,7 +91,7 @@ const previewFallback = {
   title: "产品驱动型创作者 · AI Native Builder",
   thesis: "一个把 Agent 研究、产品策略和实际交付串成同一条工作流的 Builder。",
   recap:
-    "这个预览页直接以 Gavin 当前的 BuilderBio 为素材，但会用更清晰的方式去讲：他是什么样的 Builder、他怎么管理 AI、以及哪些作品最能代表他的 taste。",
+    "从 1 月到 3 月，Gavin 把 Agent 研究、产品策略、工具实现和对外表达推进到了同一条主线上。",
   social: [
     { label: "X", href: "https://x.com/gavin0922" },
     { label: "LinkedIn", href: "https://www.linkedin.com/in/gavin-c-b271a492/" },
@@ -158,7 +158,7 @@ const previewFallback = {
     stage: "Signature build",
     summary:
       "做了一个 Claude Code skill，能扫描本地 session 日志，并生成一个可分享的 Builder 画像页。",
-    why: "它把 Gavin 最近最反复投入的三件事放到了一起：研究 Agent、推进产品，以及把自己的工作流做成别人也能用的工具。",
+    why: "它把 Gavin 这段时间投入最深的三件事放到了一起：研究 Agent、推进产品，以及把自己的工作流做成可复用的工具。",
     proof: [
       "这个项目线累计 2.3K turns",
       "把内部工作流直接做成了公共展示物",
@@ -172,11 +172,11 @@ const previewFallback = {
     },
     {
       title: "让 AI 同时参与策略和执行",
-      summary: "同一条工作流里既有产品思考，也有工具实现、翻译整理和包装表达。",
+      summary: "同一条主线里既有产品决策，也有工具实现、翻译整理和对外表达。",
     },
     {
-      title: "先在终端里推进，再长出故事",
-      summary: "先在终端里把事情推进到能跑，再回头整理成别人能理解、能使用的产品和表达。",
+      title: "先在终端里推进，再整理成成品",
+      summary: "先在终端里把事情推进到能跑，再回头收束成别人能直接看到、理解和使用的产物。",
     },
   ],
   highMoments: [
@@ -315,7 +315,7 @@ const previewFallback = {
       title: "进入复利输出",
       period: "3 月 2 日 → 3 月 10 日",
       summary:
-        "执行、讲述和产品包装开始汇合，输出不再只是内部工作，而是逐渐变成对外可见的公共产物。",
+        "执行、表达和产品化开始汇合，很多输出不再只停留在内部，而是逐渐变成公开可见的产物。",
       cue: "产出峰值 · 表达更清晰 · 公开化",
       bars: [91, 100, 86],
     },
@@ -323,7 +323,7 @@ const previewFallback = {
   socialCurrency: {
     title: "Collaboration scale",
     summary:
-      "这些数字本身不是故事，但它们往往是别的 Builder 第一眼判断“这页是不是来真的”的地方。",
+      "9.99B tokens、230 个会话和 12.7K turns，把 Gavin 这段时间和 AI 协作的强度直接摆了出来。",
     facts: [
       { label: "最大会话", value: "1,283 turns" },
       { label: "最忙的一天", value: "13 个 sessions · 1,597 turns" },
@@ -455,8 +455,8 @@ const previewFallback = {
   evidence: {
     coverage: {
       status: "真实 Gavin 页面数据",
-      summary: "直接使用 gavin.builderbio.dev 当前静态页内容，再重组到新一代布局里",
-      note: "这个预览页用的不是占位数据，而是 Gavin 当前 BuilderBio 页面的真实内容。",
+      summary: "这里的模块内容直接建立在 Gavin 当前 BuilderBio 的真实数据上，再按新的 recap 结构重组。",
+      note: "从时间分布到高光会话，这里展示的内容都能回到 Gavin 当前 BuilderBio 的真实记录。",
     },
     receipts: [
       { label: "高峰时段", value: "10 AM", detail: "晨间型 Builder" },
@@ -599,7 +599,7 @@ function buildPageCopy(preview: typeof previewFallback, liveProfile: boolean) {
   const socialCurrencySummary =
     preview.socialCurrency.summary ||
     (lang === "zh"
-      ? `${formatCompact(preview.totalTokens)} tokens、${preview.stats[0].value} 个会话和 ${preview.stats[1].value} turns，说明这已经是持续而深入的 AI 协作，而不是偶尔试用。`
+      ? `${formatCompact(preview.totalTokens)} tokens、${preview.stats[0].value} 个会话和 ${preview.stats[1].value} turns，直接说明这已经是持续而深入的 AI 协作。`
       : `${formatCompact(preview.totalTokens)} tokens, ${preview.stats[0].value} sessions, and ${preview.stats[1].value} turns point to sustained, deep AI collaboration rather than occasional experimentation.`);
 
   return {
@@ -611,11 +611,11 @@ function buildPageCopy(preview: typeof previewFallback, liveProfile: boolean) {
     socialCurrencyBadge: lang === "zh" ? "协作强度" : "Collaboration scale",
     highMomentsHeading:
       lang === "zh"
-        ? `${dateLabel} 是 ${name} 这段时间最容易被人记住的一次高峰。`
-        : `${dateLabel} is the moment most likely to stick in people's minds from this stretch of ${name}'s work.`,
+        ? `${dateLabel} 是 ${name} 这段时间强度最高的一次高峰。`
+        : `${dateLabel} marks the highest-intensity spike in this stretch of ${name}'s work.`,
     signatureMovesHeading:
       lang === "zh"
-        ? `这些反复出现的习惯，基本就是 ${name} 和 AI 协作时最稳定的做法。`
+        ? `这些反复出现的习惯，能直接看出 ${name} 平时怎么推进工作。`
         : `These recurring habits are the clearest signature of how ${name} works with AI.`,
     projectsHeading:
       lang === "zh"
@@ -635,7 +635,7 @@ function buildPageCopy(preview: typeof previewFallback, liveProfile: boolean) {
         : `Different agents have clearly defined jobs in ${name}'s workflow.`,
     agentRolesSummary:
       lang === "zh"
-        ? `重要的不是谁用得更多，而是 ${name} 会把不同 agent 放在不同任务里。`
+        ? `更关键的是 ${name} 会把不同 agent 放进不同任务，而不是混着用。`
         : `What matters is not who shows up more often, but how ${name} assigns different agents to different kinds of work.`,
     erasHeading: eraTitles
       ? lang === "zh"
@@ -644,7 +644,7 @@ function buildPageCopy(preview: typeof previewFallback, liveProfile: boolean) {
       : lang === "zh"
         ? `这条时间线能清楚看见 ${name} 这段时间的轨迹怎么一步步变化。`
         : `This timeline shows how ${name}'s trajectory changed step by step across the period.`,
-    evidenceHeading: lang === "zh" ? "这些判断背后，都能找到对应的日志证据。" : "Each of these claims can be traced back to log evidence.",
+    evidenceHeading: lang === "zh" ? "下面这些结论，都能回到对应的日志和会话。" : "Each of these conclusions maps back to specific logs and sessions.",
     evidenceStatus: preview.evidence.coverage.status,
     evidenceSummary:
       preview.evidence.coverage.summary ||
@@ -662,8 +662,8 @@ function buildPageCopy(preview: typeof previewFallback, liveProfile: boolean) {
         : `${preview.activity.activeDays} active days preserve the full rhythm of how ${name} built during this stretch.`,
     receiptsHeading:
       lang === "zh"
-        ? "这些高光不是包装出来的，而是可以直接回到真实历史里的事实。"
-        : "These standout moments are not packaging; they are facts that can be traced directly back to the real history.",
+        ? "这些高光，都能直接回到对应的会话和日期。"
+        : "Each of these standout moments can be traced back to a specific session or date.",
     ctaHeading: "Make your own BuilderBio.",
     ctaSummary:
       "Give BuilderBio the history of your local coding agents and it will turn your project arcs, collaboration patterns, and standout moments into a shareable builder profile.",
