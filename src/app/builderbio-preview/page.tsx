@@ -87,7 +87,7 @@ const previewFallback = {
   lang: "zh",
   name: "Gavin",
   slug: "gavin.builderbio.dev",
-  avatarUrl: "/avatar-gavin.jpg",
+  avatarUrl: "https://pbs.twimg.com/profile_images/1976103902102859776/uX5Cphif_400x400.jpg",
   avatarLetter: "G",
   title: "产品驱动型创作者 · AI Native Builder",
   thesis: "一个把 Agent 研究、产品策略和实际交付串成同一条工作流的 Builder。",
