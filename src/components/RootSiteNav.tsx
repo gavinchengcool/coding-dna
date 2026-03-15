@@ -9,7 +9,7 @@ export default function RootSiteNav() {
     typeof window === "undefined" ? "" : window.location.host.split(":")[0] || "";
 
   const isRootHost =
-    !host || host === "builderbio.dev" || host === "www.builderbio.dev" || host === "localhost";
+    host === "builderbio.dev" || host === "www.builderbio.dev" || host === "localhost";
 
   const shouldRender =
     isRootHost && (pathname === "/" || pathname.startsWith("/taste-board") || pathname.startsWith("/me"));
