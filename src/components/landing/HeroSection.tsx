@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import InstallCommandBox from "@/components/InstallCommandBox";
+import TopNav from "@/components/TopNav";
 
 interface HeroSectionProps {
   t: (key: string) => string;
@@ -33,21 +34,7 @@ export default function HeroSection({ t }: HeroSectionProps) {
 
   return (
     <section ref={sectionRef} className="pb-12 sm:pb-24 px-4 hero-glow">
-      {/* Nav — inside hero-glow so it floats on the light */}
-      <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4 relative z-10">
-        <a href="https://builderbio.dev" className="flex items-center text-accent font-bold text-sm tracking-wide">
-          ~/builderbio
-        </a>
-        <nav className="flex items-center gap-4 text-xs text-text-secondary">
-          <a href="https://builderbio.dev/taste-board" className="hover:text-accent transition-colors">
-            /taste-board
-          </a>
-          <span className="text-text-muted">·</span>
-          <a href="https://gavin.builderbio.dev" className="hover:text-accent transition-colors">
-            /built-by
-          </a>
-        </nav>
-      </div>
+      <TopNav activeHome className="relative z-10" />
 
       <div className="mx-auto max-w-5xl text-center relative z-10 pt-12 sm:pt-24">
         {/* Slogan */}
