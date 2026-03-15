@@ -34,7 +34,7 @@ export default function HeroSection({ t }: HeroSectionProps) {
 
   return (
     <section ref={sectionRef} className="pb-12 sm:pb-24 hero-glow">
-      <TopNav activeHome className="relative z-10" />
+      <TopNav activeHome fixed />
 
       <div className="mx-auto max-w-5xl px-4 text-center relative z-10 pt-12 sm:pt-24">
         {/* Slogan */}
