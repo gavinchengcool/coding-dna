@@ -24,19 +24,19 @@ export default function TopNav({
     : "relative z-10";
 
   const homeClassName = `inline-flex items-center font-bold text-sm tracking-wide ${
-    activeHome ? "text-text-primary" : "text-text-secondary hover:text-text-primary"
+    activeHome ? "text-accent" : "text-text-secondary hover:text-accent"
   }`;
   const tasteBoardClassName = `inline-flex items-center justify-center ${
-    activeTasteBoard ? "text-text-primary" : "hover:text-text-primary"
+    activeTasteBoard ? "text-accent" : "hover:text-accent"
   }`;
   const builtByClassName = `inline-flex items-center justify-center ${
-    activeBuiltBy ? "text-text-primary" : "hover:text-text-primary"
+    activeBuiltBy ? "text-accent" : "hover:text-accent"
   }`;
 
   return (
     <header className={`${wrapperClassName} ${className}`.trim()}>
       <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4">
-        <div className="relative inline-flex h-6 items-center">
+        <div className="inline-flex h-6 items-center">
           {useInternalRootLinks ? (
             <Link href="/" className={homeClassName}>
               ~/builderbio
@@ -46,12 +46,9 @@ export default function TopNav({
               ~/builderbio
             </a>
           )}
-          {activeHome ? (
-            <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded-full bg-accent" />
-          ) : null}
         </div>
         <nav className="flex items-center gap-2 text-xs text-text-secondary">
-          <div className="relative flex h-6 min-w-[7.5rem] items-center justify-center">
+          <div className="flex h-6 min-w-[7.5rem] items-center justify-center">
             {useInternalRootLinks ? (
               <Link href="/taste-board" className={tasteBoardClassName}>
                 /taste-board
@@ -61,18 +58,12 @@ export default function TopNav({
                 /taste-board
               </a>
             )}
-            {activeTasteBoard ? (
-              <span className="absolute -bottom-1 left-1/2 h-0.5 w-12 -translate-x-1/2 rounded-full bg-accent" />
-            ) : null}
           </div>
           <span className="text-text-muted">·</span>
-          <div className="relative flex h-6 min-w-[6.5rem] items-center justify-center">
+          <div className="flex h-6 min-w-[6.5rem] items-center justify-center">
             <a href="https://gavin.builderbio.dev" className={builtByClassName}>
               /built-by
             </a>
-            {activeBuiltBy ? (
-              <span className="absolute -bottom-1 left-1/2 h-0.5 w-10 -translate-x-1/2 rounded-full bg-accent" />
-            ) : null}
           </div>
         </nav>
       </div>
