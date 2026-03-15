@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import { SiteFooter } from "@/lib/site-footer";
+import RootSiteNav from "@/components/RootSiteNav";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -119,6 +120,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${jetbrainsMono.variable} antialiased min-h-screen flex flex-col`}>
+        <RootSiteNav />
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>

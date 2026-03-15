@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import InstallCommandBox from "@/components/InstallCommandBox";
-import TopNav from "@/components/TopNav";
 
 interface HeroSectionProps {
   t: (key: string) => string;
@@ -34,8 +33,6 @@ export default function HeroSection({ t }: HeroSectionProps) {
 
   return (
     <section ref={sectionRef} className="pb-12 sm:pb-24 hero-glow">
-      <TopNav activeHome fixed useInternalRootLinks />
-
       <div className="mx-auto max-w-5xl px-4 text-center relative z-10 pt-12 sm:pt-24">
         {/* Slogan */}
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-black tracking-tight text-accent leading-[0.95]" style={{ wordSpacing: '-0.15em' }}>

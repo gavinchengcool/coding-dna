@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Titlebar from "@/components/Titlebar";
-
 export const metadata: Metadata = {
   title: "Taste Board — Discover Builders Who Ship with AI",
   description:
@@ -28,10 +26,5 @@ export default function ClubLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <Titlebar useInternalRootLinks />
-      <div className="pt-12">{children}</div>
-    </>
-  );
+  return <div className="pt-12">{children}</div>;
 }
