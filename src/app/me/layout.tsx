@@ -13,7 +13,7 @@ export default function MeLayout({
 }) {
   return (
     <>
-      <Titlebar />
+      <Titlebar useInternalRootLinks />
       <div className="pt-12">{children}</div>
     </>
   );

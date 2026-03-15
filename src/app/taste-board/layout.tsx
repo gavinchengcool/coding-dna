@@ -30,7 +30,7 @@ export default function ClubLayout({
 }) {
   return (
     <>
-      <Titlebar />
+      <Titlebar useInternalRootLinks />
       <div className="pt-12">{children}</div>
     </>
   );

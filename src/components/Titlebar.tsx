@@ -7,10 +7,12 @@ export default function Titlebar({
   forceBuiltByActive = false,
   forceTasteBoardActive = false,
   forceHomeInactive = false,
+  useInternalRootLinks = false,
 }: {
   forceBuiltByActive?: boolean;
   forceTasteBoardActive?: boolean;
   forceHomeInactive?: boolean;
+  useInternalRootLinks?: boolean;
 }) {
   const pathname = usePathname();
   const isTasteBoard = forceTasteBoardActive || pathname.startsWith("/taste-board");
@@ -23,6 +25,7 @@ export default function Titlebar({
       activeHome={isHome}
       activeTasteBoard={isTasteBoard}
       activeBuiltBy={isBuiltBy}
+      useInternalRootLinks={useInternalRootLinks}
     />
   );
 }
