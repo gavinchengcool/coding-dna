@@ -35,7 +35,10 @@ export default function TopNav({
 
   return (
     <header className={`${wrapperClassName} ${className}`.trim()}>
-      <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4">
+      <div
+        className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4"
+        style={{ fontFamily: "var(--font-builderbio-recap)" }}
+      >
         <div className="inline-flex h-6 items-center">
           {useInternalRootLinks ? (
             <Link href="/" className={homeClassName}>

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { JetBrains_Mono } from "next/font/google";
 import { SiteFooter } from "@/lib/site-footer";
 import RootSiteNav from "@/components/RootSiteNav";
@@ -85,11 +86,18 @@ export const viewport: Viewport = {
   themeColor: "#111111",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerStore = await headers();
+  const host = (
+    headerStore.get("x-forwarded-host") ||
+    headerStore.get("host") ||
+    ""
+  ).split(":")[0];
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
@@ -120,7 +128,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${jetbrainsMono.variable} antialiased min-h-screen flex flex-col`}>
-        <RootSiteNav />
+        <RootSiteNav initialHost={host} />
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>
