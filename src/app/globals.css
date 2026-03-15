@@ -19,6 +19,10 @@
     "DejaVu Sans Mono", ui-monospace, monospace;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 @theme inline {
   --color-bg-primary: var(--bg-primary);
   --color-bg-secondary: var(--bg-secondary);
